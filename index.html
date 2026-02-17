@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Employee Attendance Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,9 +15,10 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             background: #0f172a;
             overflow: hidden;
+            /* Prevents pull-to-refresh on mobile */
+            overscroll-behavior-y: contain;
         }
 
-        /* Modern Animated Mesh Background */
         .bg-gradient {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -31,10 +32,10 @@
 
         .blob {
             position: absolute;
-            width: 500px;
-            height: 500px;
+            width: 300px;
+            height: 300px;
             background: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%);
-            filter: blur(80px);
+            filter: blur(60px);
             opacity: 0.15;
             border-radius: 50%;
             animation: move 20s infinite alternate;
@@ -42,63 +43,46 @@
 
         @keyframes move {
             from { transform: translate(-10%, -10%); }
-            to { transform: translate(20%, 20%); }
+            to { transform: translate(10%, 10%); }
         }
 
-        /* Glassmorphism Effect */
         .glass-card { 
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 2rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        /* Button Interaction Animations */
         .btn-action { 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
         
-        .btn-action:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
-            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
-        }
-
         .btn-action:active { 
-            transform: scale(0.92); 
-            filter: brightness(0.9);
+            transform: scale(0.95); 
+            filter: brightness(0.8);
         }
 
-        /* Custom Inner Glow for Inputs */
         .input-glass {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: white;
-            transition: all 0.3s;
+            appearance: none;
         }
 
-        .input-glass:focus {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-        }
-
-        /* Scanner Specific Styles */
         #reader {
-            width: 100%;
-            border-radius: 12px;
+            width: 100% !important;
+            border-radius: 1rem;
             overflow: hidden;
         }
+
         #reader video {
-            object-fit: cover;
-            border-radius: 12px;
+            object-fit: cover !important;
         }
 
-        /* Success Animation */
         .scale-in {
             animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
@@ -108,128 +92,124 @@
         }
     </style>
 </head>
-<body class="h-screen flex flex-col justify-center items-center p-6 relative">
+<body class="min-h-screen flex flex-col items-center p-4 relative">
 
     <div class="bg-gradient"></div>
     <div class="blob"></div>
 
-    <div class="absolute top-0 w-full p-8 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <div class="bg-blue-600/20 p-2 rounded-xl backdrop-blur-md border border-blue-500/30">
-                <i class="fa-solid fa-fingerprint text-blue-400 text-2xl"></i>
+    <div class="w-full max-w-md pt-4 pb-6 flex justify-between items-center px-2">
+        <div class="flex items-center gap-2">
+            <div class="bg-blue-600/20 p-2 rounded-lg backdrop-blur-md border border-blue-500/30">
+                <i class="fa-solid fa-fingerprint text-blue-400 text-xl"></i>
             </div>
-            <span class="font-extrabold text-white tracking-widest text-lg">ATTENDANCE<span class="text-blue-500">HUB</span></span>
+            <span class="font-extrabold text-white tracking-widest text-sm">ATTENDANCE<span class="text-blue-500">HUB</span></span>
         </div>
-        <div class="text-sm font-bold font-mono text-blue-100 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-full backdrop-blur-xl shadow-lg" id="clock">00:00:00</div>
+        <div class="text-[10px] font-bold font-mono text-blue-100 bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-full" id="clock">00:00:00</div>
     </div>
 
-    <div class="w-full max-w-md z-10">
+    <div class="w-full max-w-md z-10 flex-1 flex flex-col">
         
-        <div class="flex bg-white/5 p-1.5 rounded-2xl mb-8 relative border border-white/10 backdrop-blur-md">
-            <button onclick="switchTab('scan')" class="flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-white transition z-10" id="tab-scan">
-                <i class="fa-solid fa-expand mr-2 opacity-70"></i> Scan QR
+        <div class="flex bg-white/5 p-1 rounded-2xl mb-6 relative border border-white/10 backdrop-blur-md">
+            <button onclick="switchTab('scan')" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition z-10" id="tab-scan">
+                <i class="fa-solid fa-expand mr-1.5 opacity-70"></i> Scan QR
             </button>
-            <button onclick="switchTab('action')" class="flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-gray-400 transition z-10" id="tab-action">
-                <i class="fa-solid fa-list-check mr-2 opacity-70"></i> Manual
+            <button onclick="switchTab('action')" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 transition z-10" id="tab-action">
+                <i class="fa-solid fa-list-check mr-1.5 opacity-70"></i> Manual
             </button>
-            <div id="slider" class="absolute w-[calc(50%-6px)] h-[calc(100%-12px)] top-[6px] left-[6px] transition-all duration-500 ease-out">
-                <div class="bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.4)] w-full h-full rounded-xl"></div>
+            <div id="slider" class="absolute w-[calc(50%-4px)] h-[calc(100%-8px)] top-[4px] left-[4px] transition-all duration-500 ease-out">
+                <div class="bg-blue-600 shadow-lg w-full h-full rounded-xl"></div>
             </div>
         </div>
 
-        <div id="view-scan" class="glass-card p-10 text-center space-y-6 relative overflow-hidden">
+        <div id="view-scan" class="glass-card p-6 md:p-10 text-center space-y-6 relative overflow-hidden flex-1 flex flex-col justify-center">
             
             <div id="scan-loader" class="absolute inset-0 bg-slate-950/90 z-30 flex flex-col items-center justify-center hidden backdrop-blur-md">
                 <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i>
-                <p class="text-white font-bold animate-pulse">Processing...</p>
+                <p class="text-white font-bold animate-pulse text-sm">Processing...</p>
             </div>
 
             <div id="success-modal" class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-emerald-600/95 hidden backdrop-blur-lg">
                 <div class="scale-in flex flex-col items-center text-white p-6 text-center">
-                    <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-4 shadow-xl">
-                        <i class="fa-solid fa-check text-4xl"></i>
+                    <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-check text-3xl"></i>
                     </div>
-                    <h3 class="text-2xl font-black mb-1 uppercase tracking-tight" id="modal-action-text">Time In</h3>
-                    <p class="text-emerald-100 font-medium mb-4" id="modal-name-text">Employee Name</p>
-                    <div class="bg-white/10 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/20">
+                    <h3 class="text-xl font-black mb-1 uppercase tracking-tight" id="modal-action-text">Time In</h3>
+                    <p class="text-emerald-100 text-sm font-medium mb-4" id="modal-name-text">Employee Name</p>
+                    <div class="bg-white/10 px-4 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border border-white/20">
                         Attendance Logged
                     </div>
                 </div>
             </div>
 
             <div>
-                <h2 class="text-3xl font-extrabold text-white">Scan ID Badge</h2>
-                <p class="text-blue-200/60 text-sm mt-2">Auto-detects Time In/Out status.</p>
+                <h2 class="text-2xl font-extrabold text-white">Scan ID Badge</h2>
+                <p class="text-blue-200/60 text-xs mt-1">Position the QR code within the frame.</p>
             </div>
             
             <div class="flex justify-center py-2">
-                <div class="p-2 bg-white/10 rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.2)] w-64 h-64 flex items-center justify-center overflow-hidden relative">
-                   <div id="reader" class="w-full h-full bg-black/50"></div>
-                    
-                    <div class="absolute inset-0 border-2 border-blue-500/50 rounded-2xl pointer-events-none"></div>
-                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 border border-white/30 rounded-lg pointer-events-none"></div>
+                <div class="p-1.5 bg-white/10 rounded-2xl w-full aspect-square max-w-[280px] flex items-center justify-center overflow-hidden relative">
+                    <div id="reader"></div>
+                    <div class="absolute inset-0 border-2 border-blue-500/30 rounded-2xl pointer-events-none"></div>
                 </div>
             </div>
             
-            <p class="text-[10px] uppercase tracking-[0.2em] text-blue-400/50 font-bold italic" id="scanner-status">Camera Inactive</p>
+            <p class="text-[9px] uppercase tracking-[0.2em] text-blue-400/50 font-bold italic" id="scanner-status">Camera Inactive</p>
         </div>
 
-        <div id="view-action" class="glass-card p-10 hidden relative overflow-hidden">
+        <div id="view-action" class="glass-card p-8 hidden relative overflow-hidden">
             <div id="loader" class="absolute inset-0 bg-slate-950/80 z-20 flex items-center justify-center hidden backdrop-blur-sm">
                 <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500"></i>
             </div>
 
-            <div class="text-center mb-8">
-                <h2 class="text-3xl font-extrabold text-white">Manual Entry</h2>
-                <p class="text-blue-200/60 text-sm mt-1">Use if scanner is unavailable.</p>
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-extrabold text-white">Manual Entry</h2>
             </div>
 
-            <form id="attendanceForm" class="space-y-6">
+            <form id="attendanceForm" class="space-y-5">
                 <div>
-                    <label class="block text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2 ml-1">Employee ID</label>
+                    <label class="block text-[9px] font-black text-blue-400 uppercase tracking-widest mb-2 ml-1">Employee ID</label>
                     <div class="relative">
-                        <span class="absolute left-4 top-4 text-blue-400/50"><i class="fa-solid fa-id-badge"></i></span>
-                        <input type="text" id="empId" placeholder="EMP001" class="w-full pl-12 pr-4 py-4 input-glass rounded-2xl focus:outline-none uppercase font-bold text-lg tracking-widest placeholder:text-white/10">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400/50"><i class="fa-solid fa-id-badge"></i></span>
+                        <input type="text" id="empId" placeholder="EMP001" class="w-full pl-11 pr-4 py-4 input-glass rounded-xl focus:outline-none uppercase font-bold text-base tracking-widest placeholder:text-white/10">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <button type="button" onclick="logManualAction('Time In')" class="btn-action bg-emerald-500 text-white p-5 rounded-2xl flex flex-col items-center gap-2 shadow-lg shadow-emerald-500/20">
-                        <i class="fa-solid fa-sun text-2xl"></i>
-                        <span class="font-bold text-xs uppercase tracking-tighter">Time In</span>
+                <div class="grid grid-cols-2 gap-3">
+                    <button type="button" onclick="logManualAction('Time In')" class="btn-action bg-emerald-500 text-white p-4 rounded-xl flex flex-col items-center gap-2">
+                        <i class="fa-solid fa-sun text-xl"></i>
+                        <span class="font-bold text-[10px] uppercase">Time In</span>
                     </button>
                     
-                    <button type="button" onclick="logManualAction('Time Out')" class="btn-action bg-slate-700 text-white p-5 rounded-2xl flex flex-col items-center gap-2 shadow-lg shadow-slate-900/40">
-                        <i class="fa-solid fa-moon text-2xl"></i>
-                        <span class="font-bold text-xs uppercase tracking-tighter">Time Out</span>
+                    <button type="button" onclick="logManualAction('Time Out')" class="btn-action bg-slate-700 text-white p-4 rounded-xl flex flex-col items-center gap-2">
+                        <i class="fa-solid fa-moon text-xl"></i>
+                        <span class="font-bold text-[10px] uppercase">Time Out</span>
                     </button>
 
-                    <button type="button" onclick="logManualAction('Lunch Out')" class="btn-action bg-amber-500 text-white p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-amber-500/20">
+                    <button type="button" onclick="logManualAction('Lunch Out')" class="btn-action bg-amber-500 text-white p-4 rounded-xl flex flex-col items-center gap-1">
                         <i class="fa-solid fa-burger text-lg"></i>
-                        <span class="font-bold text-[10px] uppercase">Lunch Out</span>
+                        <span class="font-bold text-[9px] uppercase">Lunch Out</span>
                     </button>
 
-                    <button type="button" onclick="logManualAction('Lunch Back')" class="btn-action bg-blue-500 text-white p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-blue-500/20">
+                    <button type="button" onclick="logManualAction('Lunch Back')" class="btn-action bg-blue-500 text-white p-4 rounded-xl flex flex-col items-center gap-1">
                         <i class="fa-solid fa-briefcase text-lg"></i>
-                        <span class="font-bold text-[10px] uppercase">Back Work</span>
+                        <span class="font-bold text-[9px] uppercase">Back Work</span>
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 transition-all duration-500 opacity-0 translate-y-20 pointer-events-none z-50 border border-white/20">
-        <div id="toastIconCircle" class="w-8 h-8 rounded-full flex items-center justify-center">
-            <i id="toastIcon" class="fa-solid fa-check text-sm"></i>
+    <div id="toast" class="fixed bottom-6 left-4 right-4 bg-white text-slate-900 px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-500 opacity-0 translate-y-10 pointer-events-none z-50 border border-white/20 max-w-md mx-auto">
+        <div id="toastIconCircle" class="w-7 h-7 rounded-full flex items-center justify-center shrink-0">
+            <i id="toastIcon" class="fa-solid fa-check text-xs"></i>
         </div>
-        <span id="toastMsg" class="font-bold text-sm tracking-tight">Success</span>
+        <span id="toastMsg" class="font-bold text-xs tracking-tight">Success</span>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        // CONFIGURATION
         const firebaseConfig = {
             apiKey: "AIzaSyAxBT0oESoL62oz_x_Z8cMtdENWZPx4tMI",
             authDomain: "pinotp-d7ef5.firebaseapp.com",
@@ -242,12 +222,10 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Clock
         setInterval(() => {
             document.getElementById('clock').innerText = new Date().toLocaleTimeString();
         }, 1000);
 
-        // --- SCANNER LOGIC ---
         let html5QrCode;
         let isScanning = false;
 
@@ -260,16 +238,17 @@
 
         function startScanner() {
             if(isScanning) return;
-            const config = { fps: 10, qrbox: { width: 200, height: 200 } };
+            // Mobile optimized qrbox size
+            const config = { fps: 15, qrbox: { width: 220, height: 220 } };
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
             .then(() => {
                 isScanning = true;
                 document.getElementById('scanner-status').innerText = "Scanning Active...";
-                document.getElementById('scanner-status').classList.add('text-green-400');
+                document.getElementById('scanner-status').className = "text-[9px] uppercase tracking-[0.2em] text-green-400 font-bold italic";
             })
             .catch(err => {
-                document.getElementById('scanner-status').innerText = "Camera Permission Denied";
-                document.getElementById('scanner-status').classList.add('text-red-400');
+                document.getElementById('scanner-status').innerText = "Camera Denied";
+                document.getElementById('scanner-status').className = "text-[9px] uppercase tracking-[0.2em] text-red-400 font-bold italic";
             });
         }
 
@@ -283,10 +262,8 @@
             }
         }
 
-        // AUTO ATTENDANCE LOGIC
-        function onScanSuccess(decodedText, decodedResult) {
+        function onScanSuccess(decodedText) {
             if(!decodedText) return;
-            
             stopScanner();
             document.getElementById('scan-loader').classList.remove('hidden');
             
@@ -299,61 +276,39 @@
                     handleScanError("Invalid Employee ID");
                     return;
                 }
-
                 const empData = empSnap.val();
-
                 db.ref(`attendance/${today}/${empId}`).once('value', (attSnap) => {
                     let actionType = "";
-                    let updateData = {
-                        id: empId,
-                        name: empData.name,
-                        timestamp: firebase.database.ServerValue.TIMESTAMP
-                    };
-
+                    let updateData = { id: empId, name: empData.name, timestamp: firebase.database.ServerValue.TIMESTAMP };
                     const attendance = attSnap.val();
 
                     if (!attendance) {
-                        actionType = "Time In";
-                        updateData.TimeIn = nowTime;
+                        actionType = "Time In"; updateData.TimeIn = nowTime;
                     } else if (!attendance.LunchOut) {
-                        actionType = "Lunch Out";
-                        updateData.LunchOut = nowTime;
+                        actionType = "Lunch Out"; updateData.LunchOut = nowTime;
                     } else if (!attendance.LunchBack) {
-                        actionType = "Lunch Back";
-                        updateData.LunchBack = nowTime;
+                        actionType = "Lunch Back"; updateData.LunchBack = nowTime;
                     } else if (!attendance.TimeOut) {
-                        actionType = "Time Out";
-                        updateData.TimeOut = nowTime;
+                        actionType = "Time Out"; updateData.TimeOut = nowTime;
                     } else {
-                        handleScanError("Attendance Complete Today");
+                        handleScanError("Complete Today");
                         return;
                     }
 
                     updateData.lastAction = actionType;
-
                     db.ref(`attendance/${today}/${empId}`).update(updateData)
-                    .then(() => {
-                        showSuccessModal(actionType, empData.name);
-                    })
-                    .catch((error) => {
-                        handleScanError(error.message);
-                    });
+                    .then(() => { showSuccessModal(actionType, empData.name); })
+                    .catch((error) => { handleScanError(error.message); });
                 });
             });
         }
 
         function showSuccessModal(action, name) {
             document.getElementById('scan-loader').classList.add('hidden');
-            
-            // Set Modal Data
             document.getElementById('modal-action-text').innerText = action;
             document.getElementById('modal-name-text').innerText = name;
-            
-            // Show Modal
             const modal = document.getElementById('success-modal');
             modal.classList.remove('hidden');
-
-            // Automatically hide and restart scanner
             setTimeout(() => {
                 modal.classList.add('hidden');
                 startScanner();
@@ -368,7 +323,6 @@
 
         function onScanFailure(error) {}
 
-        // Tab Switcher
         function switchTab(mode) {
             const scanView = document.getElementById('view-scan');
             const actionView = document.getElementById('view-action');
@@ -396,33 +350,21 @@
         function logManualAction(actionType) {
             const idInput = document.getElementById('empId');
             const empId = idInput.value.trim().toUpperCase();
-            if(!empId) { showToast('Please enter Employee ID', true); return; }
-
+            if(!empId) { showToast('Enter ID', true); return; }
             document.getElementById('loader').classList.remove('hidden');
-
             db.ref('employees/' + empId).once('value', (snap) => {
                 if(!snap.exists()) {
                     document.getElementById('loader').classList.add('hidden');
-                    showToast('Invalid Employee ID', true);
-                    return;
+                    showToast('Invalid ID', true); return;
                 }
-
                 const empData = snap.val();
                 const today = new Date().toISOString().split('T')[0];
                 const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-
-                const updateData = {
-                    lastAction: actionType,
-                    id: empId,
-                    name: empData.name,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                };
-
+                const updateData = { lastAction: actionType, id: empId, name: empData.name, timestamp: firebase.database.ServerValue.TIMESTAMP };
                 if(actionType === 'Time In') updateData.TimeIn = nowTime;
                 if(actionType === 'Lunch Out') updateData.LunchOut = nowTime;
                 if(actionType === 'Lunch Back') updateData.LunchBack = nowTime;
                 if(actionType === 'Time Out') updateData.TimeOut = nowTime;
-
                 db.ref(`attendance/${today}/${empId}`).update(updateData)
                 .then(() => {
                     document.getElementById('loader').classList.add('hidden');
@@ -431,7 +373,7 @@
                 })
                 .catch((error) => {
                     document.getElementById('loader').classList.add('hidden');
-                    showToast('Error: ' + error.message, true);
+                    showToast('Error', true);
                 });
             });
         }
@@ -441,17 +383,15 @@
             document.getElementById('toastMsg').innerText = msg;
             const circle = document.getElementById('toastIconCircle');
             const icon = document.getElementById('toastIcon');
-            
             if(isError) {
-                circle.className = "w-8 h-8 rounded-full flex items-center justify-center bg-red-100 text-red-600";
+                circle.className = "w-7 h-7 rounded-full flex items-center justify-center bg-red-100 text-red-600";
                 icon.className = "fa-solid fa-xmark";
             } else {
-                circle.className = "w-8 h-8 rounded-full flex items-center justify-center bg-emerald-100 text-emerald-600";
+                circle.className = "w-7 h-7 rounded-full flex items-center justify-center bg-emerald-100 text-emerald-600";
                 icon.className = "fa-solid fa-check";
             }
-
-            toast.classList.remove('opacity-0', 'translate-y-20');
-            setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-20'); }, 3000);
+            toast.classList.remove('opacity-0', 'translate-y-10');
+            setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-10'); }, 3000);
         }
     </script>
 </body>
