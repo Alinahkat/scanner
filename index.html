@@ -6,7 +6,7 @@
     <title>Employee Attendance Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
@@ -87,9 +87,15 @@
             box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
         }
 
-        #qrcode img {
+        /* Scanner Specific Styles */
+        #reader {
+            width: 100%;
             border-radius: 12px;
-            mix-blend-mode: multiply;
+            overflow: hidden;
+        }
+        #reader video {
+            object-fit: cover;
+            border-radius: 12px;
         }
     </style>
 </head>
@@ -112,7 +118,7 @@
         
         <div class="flex bg-white/5 p-1.5 rounded-2xl mb-8 relative border border-white/10 backdrop-blur-md">
             <button onclick="switchTab('scan')" class="flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-white transition z-10" id="tab-scan">
-                <i class="fa-solid fa-qrcode mr-2 opacity-70"></i> Show QR
+                <i class="fa-solid fa-expand mr-2 opacity-70"></i> Scan QR
             </button>
             <button onclick="switchTab('action')" class="flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-gray-400 transition z-10" id="tab-action">
                 <i class="fa-solid fa-user-check mr-2 opacity-70"></i> Check In/Out
@@ -124,17 +130,20 @@
 
         <div id="view-scan" class="glass-card p-10 text-center space-y-6">
             <div>
-                <h2 class="text-3xl font-extrabold text-white">Scan to Attend</h2>
-                <p class="text-blue-200/60 text-sm mt-2">Log your attendance instantly via phone.</p>
+                <h2 class="text-3xl font-extrabold text-white">Scan ID Badge</h2>
+                <p class="text-blue-200/60 text-sm mt-2">Point camera at QR code to login.</p>
             </div>
             
-            <div class="flex justify-center py-4">
-                <div class="p-5 bg-white rounded-3xl shadow-[0_0_40px_rgba(255,255,255,0.1)]">
-                    <div id="qrcode"></div>
+            <div class="flex justify-center py-2">
+                <div class="p-2 bg-white/10 rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.2)] w-64 h-64 flex items-center justify-center overflow-hidden relative">
+                   <div id="reader" class="w-full h-full bg-black/50"></div>
+                    
+                    <div class="absolute inset-0 border-2 border-blue-500/50 rounded-2xl pointer-events-none"></div>
+                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 border border-white/30 rounded-lg pointer-events-none"></div>
                 </div>
             </div>
             
-            <p class="text-[10px] uppercase tracking-[0.2em] text-blue-400/50 font-bold italic">Secure Connection Active</p>
+            <p class="text-[10px] uppercase tracking-[0.2em] text-blue-400/50 font-bold italic" id="scanner-status">Camera Inactive</p>
         </div>
 
         <div id="view-action" class="glass-card p-10 hidden relative overflow-hidden">
@@ -210,6 +219,76 @@
             document.getElementById('clock').innerText = new Date().toLocaleTimeString();
         }, 1000);
 
+        // --- SCANNER LOGIC ---
+        let html5QrCode;
+        let isScanning = false;
+
+        // Initialize Scanner on Load
+        document.addEventListener('DOMContentLoaded', () => {
+             // Create instance but don't start yet
+             html5QrCode = new Html5Qrcode("reader");
+             
+             // Initial tab check - if scan is default, start it (currently not default)
+             if(!document.getElementById('view-scan').classList.contains('hidden')){
+                 startScanner();
+             }
+        });
+
+        function startScanner() {
+            if(isScanning) return;
+            
+            const config = { fps: 10, qrbox: { width: 200, height: 200 } };
+            
+            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
+            .then(() => {
+                isScanning = true;
+                document.getElementById('scanner-status').innerText = "Scanning Active...";
+                document.getElementById('scanner-status').classList.add('text-green-400');
+            })
+            .catch(err => {
+                console.error("Error starting scanner", err);
+                document.getElementById('scanner-status').innerText = "Camera Permission Denied";
+                document.getElementById('scanner-status').classList.add('text-red-400');
+            });
+        }
+
+        function stopScanner() {
+            if(isScanning && html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    isScanning = false;
+                    document.getElementById('scanner-status').innerText = "Camera Inactive";
+                    document.getElementById('scanner-status').classList.remove('text-green-400', 'text-red-400');
+                    // clear the video element to remove frozen frame
+                    html5QrCode.clear(); 
+                }).catch(err => {
+                    console.error("Failed to stop scanner", err);
+                });
+            }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // Handle the scanned code
+            console.log(`Code matched = ${decodedText}`, decodedResult);
+            
+            // Stop scanning
+            stopScanner();
+            
+            // Fill Input
+            const idInput = document.getElementById('empId');
+            idInput.value = decodedText; // Assuming QR code contains the ID string
+            
+            // Switch Tab
+            switchTab('action');
+            
+            // Feedback
+            showToast('ID Scanned Successfully!');
+        }
+
+        function onScanFailure(error) {
+            // handle scan failure, usually better to ignore and keep scanning.
+            // console.warn(`Code scan error = ${error}`);
+        }
+
         // Tab Switcher
         function switchTab(mode) {
             const scanView = document.getElementById('view-scan');
@@ -224,24 +303,21 @@
                 slider.style.transform = 'translateX(0%)';
                 tabScan.classList.replace('text-gray-400', 'text-white');
                 tabAction.classList.replace('text-white', 'text-gray-400');
+                
+                // Start Camera
+                setTimeout(startScanner, 300); // Small delay for animation smooth
+                
             } else {
                 scanView.classList.add('hidden');
                 actionView.classList.remove('hidden');
                 slider.style.transform = 'translateX(100%)';
                 tabAction.classList.replace('text-gray-400', 'text-white');
                 tabScan.classList.replace('text-white', 'text-gray-400');
+                
+                // Stop Camera
+                stopScanner();
             }
         }
-
-        // Generate QR Code
-        new QRCode(document.getElementById("qrcode"), {
-            text: window.location.href,
-            width: 180,
-            height: 180,
-            colorDark : "#0f172a",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
-        });
 
         // ACTION LOGIC
         function logAction(actionType) {
