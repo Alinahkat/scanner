@@ -1,228 +1,228 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Attendance Portal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Attendance Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-    <style>
-        body { background-color: #f3f4f6; }
-        .glass-card { background: white; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-        .btn-action { transition: all 0.2s; }
-        .btn-action:active { transform: scale(0.95); }
-    </style>
+    <style>
+        body { background-color: #f3f4f6; }
+        .glass-card { background: white; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .btn-action { transition: all 0.2s; }
+        .btn-action:active { transform: scale(0.95); }
+    </style>
 </head>
 <body class="h-screen flex flex-col justify-center items-center p-6 relative">
 
-    <div class="absolute top-0 w-full p-6 flex justify-between items-center text-gray-500">
-        <div class="flex items-center gap-2">
-            <i class="fa-solid fa-fingerprint text-blue-600 text-xl"></i>
-            <span class="font-bold text-gray-700 tracking-wide">ATTENDANCE<span class="text-blue-600">HUB</span></span>
-        </div>
-        <div class="text-xs font-mono bg-white px-3 py-1 rounded-full shadow-sm border" id="clock">00:00:00</div>
-    </div>
+    <div class="absolute top-0 w-full p-6 flex justify-between items-center text-gray-500">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-fingerprint text-blue-600 text-xl"></i>
+            <span class="font-bold text-gray-700 tracking-wide">ATTENDANCE<span class="text-blue-600">HUB</span></span>
+        </div>
+        <div class="text-xs font-mono bg-white px-3 py-1 rounded-full shadow-sm border" id="clock">00:00:00</div>
+    </div>
 
-    <div class="w-full max-w-md">
-        
-        <div class="flex bg-gray-200 p-1 rounded-lg mb-6 relative">
-            <button onclick="switchTab('scan')" class="flex-1 py-2 rounded-md text-sm font-bold text-gray-600 transition z-10" id="tab-scan">
-                <i class="fa-solid fa-qrcode mr-2"></i> Show QR
-            </button>
-            <button onclick="switchTab('action')" class="flex-1 py-2 rounded-md text-sm font-bold text-gray-600 transition z-10" id="tab-action">
-                <i class="fa-solid fa-user-check mr-2"></i> Check In/Out
-            </button>
-            <div id="slider" class="absolute w-1/2 h-full top-0 left-0 p-1 transition-all duration-300">
-                <div class="bg-white shadow-sm w-full h-full rounded-md"></div>
-            </div>
-        </div>
+    <div class="w-full max-w-md">
+        
+        <div class="flex bg-gray-200 p-1 rounded-lg mb-6 relative">
+            <button onclick="switchTab('scan')" class="flex-1 py-2 rounded-md text-sm font-bold text-gray-600 transition z-10" id="tab-scan">
+                <i class="fa-solid fa-qrcode mr-2"></i> Show QR
+            </button>
+            <button onclick="switchTab('action')" class="flex-1 py-2 rounded-md text-sm font-bold text-gray-600 transition z-10" id="tab-action">
+                <i class="fa-solid fa-user-check mr-2"></i> Check In/Out
+            </button>
+            <div id="slider" class="absolute w-1/2 h-full top-0 left-0 p-1 transition-all duration-300">
+                <div class="bg-white shadow-sm w-full h-full rounded-md"></div>
+            </div>
+        </div>
 
-        <div id="view-scan" class="glass-card p-8 text-center space-y-6">
-            <h2 class="text-2xl font-bold text-gray-800">Scan to Attend</h2>
-            <p class="text-gray-500 text-sm">Open your camera and scan the code below to log your attendance on your phone.</p>
-            
-            <div class="flex justify-center my-4">
-                <div id="qrcode" class="p-4 bg-white border-2 border-gray-100 rounded-xl shadow-inner"></div>
-            </div>
-            
-            <p class="text-xs text-gray-400 mt-4">Make sure this device is connected to the internet.</p>
-        </div>
+        <div id="view-scan" class="glass-card p-8 text-center space-y-6">
+            <h2 class="text-2xl font-bold text-gray-800">Scan to Attend</h2>
+            <p class="text-gray-500 text-sm">Open your camera and scan the code below to log your attendance on your phone.</p>
+            
+            <div class="flex justify-center my-4">
+                <div id="qrcode" class="p-4 bg-white border-2 border-gray-100 rounded-xl shadow-inner"></div>
+            </div>
+            
+            <p class="text-xs text-gray-400 mt-4">Make sure this device is connected to the internet.</p>
+        </div>
 
-        <div id="view-action" class="glass-card p-8 hidden relative overflow-hidden">
-            <div id="loader" class="absolute inset-0 bg-white/90 z-20 flex items-center justify-center hidden">
-                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-600"></i>
-            </div>
+        <div id="view-action" class="glass-card p-8 hidden relative overflow-hidden">
+            <div id="loader" class="absolute inset-0 bg-white/90 z-20 flex items-center justify-center hidden">
+                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-600"></i>
+            </div>
 
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">Hello there! 👋</h2>
-                <p class="text-gray-500 text-sm">Enter your ID to log your status.</p>
-            </div>
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Hello there! 👋</h2>
+                <p class="text-gray-500 text-sm">Enter your ID to log your status.</p>
+            </div>
 
-            <form id="attendanceForm" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Employee ID</label>
-                    <div class="relative">
-                        <span class="absolute left-3 top-3 text-gray-400"><i class="fa-solid fa-id-badge"></i></span>
-                        <input type="text" id="empId" placeholder="EMP001" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase font-bold text-gray-700 tracking-wider">
-                    </div>
-                </div>
+            <form id="attendanceForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Employee ID</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-3 text-gray-400"><i class="fa-solid fa-id-badge"></i></span>
+                        <input type="text" id="empId" placeholder="EMP001" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase font-bold text-gray-700 tracking-wider">
+                    </div>
+                </div>
 
-                <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button type="button" onclick="logAction('Time In')" class="btn-action bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl flex flex-col items-center gap-2 shadow-lg shadow-green-500/30">
-                        <i class="fa-solid fa-sun text-2xl"></i>
-                        <span class="font-bold text-sm">Time In</span>
-                    </button>
-                    
-                    <button type="button" onclick="logAction('Time Out')" class="btn-action bg-gray-700 hover:bg-gray-800 text-white p-4 rounded-xl flex flex-col items-center gap-2 shadow-lg shadow-gray-500/30">
-                        <i class="fa-solid fa-moon text-2xl"></i>
-                        <span class="font-bold text-sm">Time Out</span>
-                    </button>
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button type="button" onclick="logAction('Time In')" class="btn-action bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl flex flex-col items-center gap-2 shadow-lg shadow-green-500/30">
+                        <i class="fa-solid fa-sun text-2xl"></i>
+                        <span class="font-bold text-sm">Time In</span>
+                    </button>
+                    
+                    <button type="button" onclick="logAction('Time Out')" class="btn-action bg-gray-700 hover:bg-gray-800 text-white p-4 rounded-xl flex flex-col items-center gap-2 shadow-lg shadow-gray-500/30">
+                        <i class="fa-solid fa-moon text-2xl"></i>
+                        <span class="font-bold text-sm">Time Out</span>
+                    </button>
 
-                    <button type="button" onclick="logAction('Lunch Out')" class="btn-action bg-yellow-400 hover:bg-yellow-500 text-white p-3 rounded-xl flex flex-col items-center gap-1 shadow-lg shadow-yellow-500/30">
-                        <i class="fa-solid fa-burger"></i>
-                        <span class="font-bold text-xs">Lunch Out</span>
-                    </button>
+                    <button type="button" onclick="logAction('Lunch Out')" class="btn-action bg-yellow-400 hover:bg-yellow-500 text-white p-3 rounded-xl flex flex-col items-center gap-1 shadow-lg shadow-yellow-500/30">
+                        <i class="fa-solid fa-burger"></i>
+                        <span class="font-bold text-xs">Lunch Out</span>
+                    </button>
 
-                    <button type="button" onclick="logAction('Lunch Back')" class="btn-action bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-xl flex flex-col items-center gap-1 shadow-lg shadow-blue-500/30">
-                        <i class="fa-solid fa-briefcase"></i>
-                        <span class="font-bold text-xs">Back to Work</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+                    <button type="button" onclick="logAction('Lunch Back')" class="btn-action bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-xl flex flex-col items-center gap-1 shadow-lg shadow-blue-500/30">
+                        <i class="fa-solid fa-briefcase"></i>
+                        <span class="font-bold text-xs">Back to Work</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 transition-all duration-300 opacity-0 translate-y-10 pointer-events-none z-50">
-        <i class="fa-solid fa-circle-check text-green-400"></i>
-        <span id="toastMsg" class="font-medium text-sm">Success</span>
-    </div>
+    <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 transition-all duration-300 opacity-0 translate-y-10 pointer-events-none z-50">
+        <i class="fa-solid fa-circle-check text-green-400"></i>
+        <span id="toastMsg" class="font-medium text-sm">Success</span>
+    </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-    <script>
-        // 1. CONFIGURATION (Must match Admin Portal)
-        const firebaseConfig = {
-            apiKey: "AIzaSyAxBT0oESoL62oz_x_Z8cMtdENWZPx4tMI",
-            authDomain: "pinotp-d7ef5.firebaseapp.com",
-            databaseURL: "https://pinotp-d7ef5-default-rtdb.firebaseio.com",
-            projectId: "pinotp-d7ef5",
-            storageBucket: "pinotp-d7ef5.firebasestorage.app",
-            messagingSenderId: "708458917827",
-            appId: "1:708458917827:web:375de278577df0adcf9776"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+    <script>
+        // 1. CONFIGURATION (Must match Admin Portal)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAxBT0oESoL62oz_x_Z8cMtdENWZPx4tMI",
+            authDomain: "pinotp-d7ef5.firebaseapp.com",
+            databaseURL: "https://pinotp-d7ef5-default-rtdb.firebaseio.com",
+            projectId: "pinotp-d7ef5",
+            storageBucket: "pinotp-d7ef5.firebasestorage.app",
+            messagingSenderId: "708458917827",
+            appId: "1:708458917827:web:375de278577df0adcf9776"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        // 2. UI LOGIC
-        
-        // Clock
-        setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-        }, 1000);
+        // 2. UI LOGIC
+        
+        // Clock
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+        }, 1000);
 
-        // Tab Switcher
-        function switchTab(mode) {
-            const scanView = document.getElementById('view-scan');
-            const actionView = document.getElementById('view-action');
-            const slider = document.getElementById('slider');
+        // Tab Switcher
+        function switchTab(mode) {
+            const scanView = document.getElementById('view-scan');
+            const actionView = document.getElementById('view-action');
+            const slider = document.getElementById('slider');
 
-            if(mode === 'scan') {
-                scanView.classList.remove('hidden');
-                actionView.classList.add('hidden');
-                slider.style.transform = 'translateX(0%)';
-            } else {
-                scanView.classList.add('hidden');
-                actionView.classList.remove('hidden');
-                slider.style.transform = 'translateX(100%)';
-            }
-        }
+            if(mode === 'scan') {
+                scanView.classList.remove('hidden');
+                actionView.classList.add('hidden');
+                slider.style.transform = 'translateX(0%)';
+            } else {
+                scanView.classList.add('hidden');
+                actionView.classList.remove('hidden');
+                slider.style.transform = 'translateX(100%)';
+            }
+        }
 
-        // Generate QR Code
-        // NOTE: For this to work on a phone, this file must be HOSTED (e.g. GitHub Pages, Vercel)
-        // If you open file:// on your laptop, the QR code will point to file:// which the phone cannot open.
-        const currentUrl = window.location.href;
-        new QRCode(document.getElementById("qrcode"), {
-            text: currentUrl,
-            width: 180,
-            height: 180,
-            colorDark : "#2563eb",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
-        });
+        // Generate QR Code
+        // NOTE: For this to work on a phone, this file must be HOSTED (e.g. GitHub Pages, Vercel)
+        // If you open file:// on your laptop, the QR code will point to file:// which the phone cannot open.
+        const currentUrl = window.location.href;
+        new QRCode(document.getElementById("qrcode"), {
+            text: currentUrl,
+            width: 180,
+            height: 180,
+            colorDark : "#2563eb",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
 
-        // 3. ACTION LOGIC
-        function logAction(actionType) {
-            const idInput = document.getElementById('empId');
-            const empId = idInput.value.trim().toUpperCase();
-            
-            if(!empId) {
-                showToast('Please enter your Employee ID', true);
-                return;
-            }
+        // 3. ACTION LOGIC
+        function logAction(actionType) {
+            const idInput = document.getElementById('empId');
+            const empId = idInput.value.trim().toUpperCase();
+            
+            if(!empId) {
+                showToast('Please enter your Employee ID', true);
+                return;
+            }
 
-            document.getElementById('loader').classList.remove('hidden');
+            document.getElementById('loader').classList.remove('hidden');
 
-            // 1. Verify Employee Exists
-            db.ref('employees/' + empId).once('value', (snap) => {
-                if(!snap.exists()) {
-                    document.getElementById('loader').classList.add('hidden');
-                    showToast('Invalid Employee ID', true);
-                    return;
-                }
+            // 1. Verify Employee Exists
+            db.ref('employees/' + empId).once('value', (snap) => {
+                if(!snap.exists()) {
+                    document.getElementById('loader').classList.add('hidden');
+                    showToast('Invalid Employee ID', true);
+                    return;
+                }
 
-                const empData = snap.val();
-                const today = new Date().toISOString().split('T')[0];
-                const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+                const empData = snap.val();
+                const today = new Date().toISOString().split('T')[0];
+                const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
-                // 2. Prepare Data
-                const updateData = {
-                    lastAction: actionType,
-                    id: empId,
-                    name: empData.name, // Log name here so we don't have to look it up later
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                };
+                // 2. Prepare Data
+                const updateData = {
+                    lastAction: actionType,
+                    id: empId,
+                    name: empData.name, // Log name here so we don't have to look it up later
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                };
 
-                // Add specific time fields based on button clicked
-                if(actionType === 'Time In') updateData.TimeIn = nowTime;
-                if(actionType === 'Lunch Out') updateData.LunchOut = nowTime;
-                if(actionType === 'Lunch Back') updateData.LunchBack = nowTime;
-                if(actionType === 'Time Out') updateData.TimeOut = nowTime;
+                // Add specific time fields based on button clicked
+                if(actionType === 'Time In') updateData.TimeIn = nowTime;
+                if(actionType === 'Lunch Out') updateData.LunchOut = nowTime;
+                if(actionType === 'Lunch Back') updateData.LunchBack = nowTime;
+                if(actionType === 'Time Out') updateData.TimeOut = nowTime;
 
-                // 3. Send to Firebase (Updates specific fields, merges with existing)
-                db.ref(`attendance/${today}/${empId}`).update(updateData)
-                .then(() => {
-                    document.getElementById('loader').classList.add('hidden');
-                    showToast(`${actionType} Recorded!`);
-                    idInput.value = ''; // Clear input
-                })
-                .catch((error) => {
-                    document.getElementById('loader').classList.add('hidden');
-                    showToast('Error: ' + error.message, true);
-                });
-            });
-        }
+                // 3. Send to Firebase (Updates specific fields, merges with existing)
+                db.ref(`attendance/${today}/${empId}`).update(updateData)
+                .then(() => {
+                    document.getElementById('loader').classList.add('hidden');
+                    showToast(`${actionType} Recorded!`);
+                    idInput.value = ''; // Clear input
+                })
+                .catch((error) => {
+                    document.getElementById('loader').classList.add('hidden');
+                    showToast('Error: ' + error.message, true);
+                });
+            });
+        }
 
-        // Toast Notification
-        function showToast(msg, isError = false) {
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toastMsg');
-            
-            toastMsg.innerText = msg;
-            if(isError) {
-                toast.querySelector('i').className = "fa-solid fa-circle-exclamation text-red-400";
-            } else {
-                toast.querySelector('i').className = "fa-solid fa-circle-check text-green-400";
-            }
+        // Toast Notification
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            
+            toastMsg.innerText = msg;
+            if(isError) {
+                toast.querySelector('i').className = "fa-solid fa-circle-exclamation text-red-400";
+            } else {
+                toast.querySelector('i').className = "fa-solid fa-circle-check text-green-400";
+            }
 
-            toast.classList.remove('opacity-0', 'translate-y-10');
-            
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-10');
-            }, 3000);
-        }
-    </script>
+            toast.classList.remove('opacity-0', 'translate-y-10');
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-10');
+            }, 3000);
+        }
+    </script>
 </body>
 </html>
