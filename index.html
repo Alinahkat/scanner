@@ -121,17 +121,22 @@
                 <i class="fa-solid fa-expand mr-2 opacity-70"></i> Scan QR
             </button>
             <button onclick="switchTab('action')" class="flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-gray-400 transition z-10" id="tab-action">
-                <i class="fa-solid fa-user-check mr-2 opacity-70"></i> Check In/Out
+                <i class="fa-solid fa-list-check mr-2 opacity-70"></i> Manual
             </button>
             <div id="slider" class="absolute w-[calc(50%-6px)] h-[calc(100%-12px)] top-[6px] left-[6px] transition-all duration-500 ease-out">
                 <div class="bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.4)] w-full h-full rounded-xl"></div>
             </div>
         </div>
 
-        <div id="view-scan" class="glass-card p-10 text-center space-y-6">
+        <div id="view-scan" class="glass-card p-10 text-center space-y-6 relative overflow-hidden">
+             <div id="scan-loader" class="absolute inset-0 bg-slate-950/90 z-30 flex flex-col items-center justify-center hidden backdrop-blur-md">
+                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i>
+                <p class="text-white font-bold animate-pulse" id="scan-msg">Processing...</p>
+            </div>
+
             <div>
                 <h2 class="text-3xl font-extrabold text-white">Scan ID Badge</h2>
-                <p class="text-blue-200/60 text-sm mt-2">Point camera at QR code to login.</p>
+                <p class="text-blue-200/60 text-sm mt-2">Auto-detects Time In/Out status.</p>
             </div>
             
             <div class="flex justify-center py-2">
@@ -152,8 +157,8 @@
             </div>
 
             <div class="text-center mb-8">
-                <h2 class="text-3xl font-extrabold text-white">Welcome! 👋</h2>
-                <p class="text-blue-200/60 text-sm mt-1">Please enter your credentials.</p>
+                <h2 class="text-3xl font-extrabold text-white">Manual Entry</h2>
+                <p class="text-blue-200/60 text-sm mt-1">Use if scanner is unavailable.</p>
             </div>
 
             <form id="attendanceForm" class="space-y-6">
@@ -166,22 +171,22 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <button type="button" onclick="logAction('Time In')" class="btn-action bg-emerald-500 text-white p-5 rounded-2xl flex flex-col items-center gap-2 shadow-lg shadow-emerald-500/20">
+                    <button type="button" onclick="logManualAction('Time In')" class="btn-action bg-emerald-500 text-white p-5 rounded-2xl flex flex-col items-center gap-2 shadow-lg shadow-emerald-500/20">
                         <i class="fa-solid fa-sun text-2xl"></i>
                         <span class="font-bold text-xs uppercase tracking-tighter">Time In</span>
                     </button>
                     
-                    <button type="button" onclick="logAction('Time Out')" class="btn-action bg-slate-700 text-white p-5 rounded-2xl flex flex-col items-center gap-2 shadow-lg shadow-slate-900/40">
+                    <button type="button" onclick="logManualAction('Time Out')" class="btn-action bg-slate-700 text-white p-5 rounded-2xl flex flex-col items-center gap-2 shadow-lg shadow-slate-900/40">
                         <i class="fa-solid fa-moon text-2xl"></i>
                         <span class="font-bold text-xs uppercase tracking-tighter">Time Out</span>
                     </button>
 
-                    <button type="button" onclick="logAction('Lunch Out')" class="btn-action bg-amber-500 text-white p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-amber-500/20">
+                    <button type="button" onclick="logManualAction('Lunch Out')" class="btn-action bg-amber-500 text-white p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-amber-500/20">
                         <i class="fa-solid fa-burger text-lg"></i>
                         <span class="font-bold text-[10px] uppercase">Lunch Out</span>
                     </button>
 
-                    <button type="button" onclick="logAction('Lunch Back')" class="btn-action bg-blue-500 text-white p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-blue-500/20">
+                    <button type="button" onclick="logManualAction('Lunch Back')" class="btn-action bg-blue-500 text-white p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-blue-500/20">
                         <i class="fa-solid fa-briefcase text-lg"></i>
                         <span class="font-bold text-[10px] uppercase">Back Work</span>
                     </button>
@@ -223,12 +228,8 @@
         let html5QrCode;
         let isScanning = false;
 
-        // Initialize Scanner on Load
         document.addEventListener('DOMContentLoaded', () => {
-             // Create instance but don't start yet
              html5QrCode = new Html5Qrcode("reader");
-             
-             // Initial tab check - if scan is default, start it (currently not default)
              if(!document.getElementById('view-scan').classList.contains('hidden')){
                  startScanner();
              }
@@ -236,9 +237,7 @@
 
         function startScanner() {
             if(isScanning) return;
-            
             const config = { fps: 10, qrbox: { width: 200, height: 200 } };
-            
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
             .then(() => {
                 isScanning = true;
@@ -246,7 +245,6 @@
                 document.getElementById('scanner-status').classList.add('text-green-400');
             })
             .catch(err => {
-                console.error("Error starting scanner", err);
                 document.getElementById('scanner-status').innerText = "Camera Permission Denied";
                 document.getElementById('scanner-status').classList.add('text-red-400');
             });
@@ -257,36 +255,98 @@
                 html5QrCode.stop().then(() => {
                     isScanning = false;
                     document.getElementById('scanner-status').innerText = "Camera Inactive";
-                    document.getElementById('scanner-status').classList.remove('text-green-400', 'text-red-400');
-                    // clear the video element to remove frozen frame
                     html5QrCode.clear(); 
-                }).catch(err => {
-                    console.error("Failed to stop scanner", err);
                 });
             }
         }
 
+        // AUTO ATTENDANCE LOGIC
         function onScanSuccess(decodedText, decodedResult) {
-            // Handle the scanned code
-            console.log(`Code matched = ${decodedText}`, decodedResult);
+            if(!decodedText) return;
             
-            // Stop scanning
+            // Pause scanner
             stopScanner();
             
-            // Fill Input
-            const idInput = document.getElementById('empId');
-            idInput.value = decodedText; // Assuming QR code contains the ID string
+            // Show Loading
+            document.getElementById('scan-loader').classList.remove('hidden');
             
-            // Switch Tab
-            switchTab('action');
+            const empId = decodedText.trim().toUpperCase();
+            const today = new Date().toISOString().split('T')[0];
+            const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+
+            // 1. Check if Employee Exists
+            db.ref('employees/' + empId).once('value', (empSnap) => {
+                if(!empSnap.exists()) {
+                    handleScanError("Invalid Employee ID");
+                    return;
+                }
+
+                const empData = empSnap.val();
+
+                // 2. Check Today's Attendance State
+                db.ref(`attendance/${today}/${empId}`).once('value', (attSnap) => {
+                    let actionType = "";
+                    let updateData = {
+                        id: empId,
+                        name: empData.name,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    };
+
+                    const attendance = attSnap.val();
+
+                    // Determine Sequence: Time In -> Lunch Out -> Lunch Back -> Time Out
+                    if (!attendance) {
+                        actionType = "Time In";
+                        updateData.TimeIn = nowTime;
+                    } else if (!attendance.LunchOut) {
+                        actionType = "Lunch Out";
+                        updateData.LunchOut = nowTime;
+                    } else if (!attendance.LunchBack) {
+                        actionType = "Lunch Back"; // Back to work
+                        updateData.LunchBack = nowTime;
+                    } else if (!attendance.TimeOut) {
+                        actionType = "Time Out";
+                        updateData.TimeOut = nowTime;
+                    } else {
+                        handleScanError("Attendance Complete for Today");
+                        return;
+                    }
+
+                    updateData.lastAction = actionType;
+
+                    // 3. Update Database
+                    db.ref(`attendance/${today}/${empId}`).update(updateData)
+                    .then(() => {
+                        handleScanSuccess(actionType, empData.name);
+                    })
+                    .catch((error) => {
+                        handleScanError(error.message);
+                    });
+                });
+            });
+        }
+
+        function handleScanSuccess(action, name) {
+            const msg = `${action} Success!\n${name}`;
+            document.getElementById('scan-loader').classList.add('hidden');
+            showToast(msg);
             
-            // Feedback
-            showToast('ID Scanned Successfully!');
+            // Restart Scanner after delay
+            setTimeout(() => {
+                startScanner();
+            }, 3000);
+        }
+
+        function handleScanError(msg) {
+            document.getElementById('scan-loader').classList.add('hidden');
+            showToast(msg, true);
+            setTimeout(() => {
+                startScanner();
+            }, 3000);
         }
 
         function onScanFailure(error) {
-            // handle scan failure, usually better to ignore and keep scanning.
-            // console.warn(`Code scan error = ${error}`);
+            // Quiet fail for frame errors
         }
 
         // Tab Switcher
@@ -303,29 +363,24 @@
                 slider.style.transform = 'translateX(0%)';
                 tabScan.classList.replace('text-gray-400', 'text-white');
                 tabAction.classList.replace('text-white', 'text-gray-400');
-                
-                // Start Camera
-                setTimeout(startScanner, 300); // Small delay for animation smooth
-                
+                setTimeout(startScanner, 300);
             } else {
                 scanView.classList.add('hidden');
                 actionView.classList.remove('hidden');
                 slider.style.transform = 'translateX(100%)';
                 tabAction.classList.replace('text-gray-400', 'text-white');
                 tabScan.classList.replace('text-white', 'text-gray-400');
-                
-                // Stop Camera
                 stopScanner();
             }
         }
 
-        // ACTION LOGIC
-        function logAction(actionType) {
+        // Manual Action Logic (Fallback)
+        function logManualAction(actionType) {
             const idInput = document.getElementById('empId');
             const empId = idInput.value.trim().toUpperCase();
             
             if(!empId) {
-                showToast('Please enter your Employee ID', true);
+                showToast('Please enter Employee ID', true);
                 return;
             }
 
