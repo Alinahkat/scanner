@@ -3,107 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Attendance Portal</title>
+    <title>Attendance Terminal | Tap to Log</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body { background-color: #f3f4f6; }
-        .glass-card { background: white; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-        .btn-action { transition: all 0.2s; }
+        body { background-color: #0f172a; color: white; overflow: hidden; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; }
+        .btn-action { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
         .btn-action:active { transform: scale(0.95); }
+        .nfc-pulse { animation: nfc-glow 2s infinite; }
+        @keyframes nfc-glow {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(99, 102, 241, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
     </style>
 </head>
-<body class="h-screen flex flex-col justify-center items-center p-6 relative">
+<body class="h-screen flex flex-col items-center justify-center p-4">
 
-    <div class="absolute top-0 w-full p-6 flex justify-between items-center text-gray-500">
-        <div class="flex items-center gap-2">
-            <i class="fa-solid fa-fingerprint text-blue-600 text-xl"></i>
-            <span class="font-bold text-gray-700 tracking-wide">ATTENDANCE<span class="text-blue-600">HUB</span></span>
+    <div class="absolute top-8 w-full px-10 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 p-2 rounded-lg">
+                <i class="fa-solid fa-fingerprint text-2xl"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight">TERMINAL <span class="text-indigo-400">01</span></h1>
         </div>
-        <div class="text-xs font-mono bg-white px-3 py-1 rounded-full shadow-sm border" id="clock">00:00:00</div>
+        <div class="text-right">
+            <div id="clock" class="text-2xl font-mono font-bold">00:00:00</div>
+            <div id="date" class="text-xs text-slate-400 uppercase tracking-widest">Monday, Feb 17</div>
+        </div>
     </div>
 
-    <div class="w-full max-w-md">
+    <div class="grid lg:grid-cols-2 gap-8 w-full max-w-6xl">
         
-        <div class="flex bg-gray-200 p-1 rounded-lg mb-6 relative">
-            <button onclick="switchTab('scan')" class="flex-1 py-2 rounded-md text-sm font-bold text-gray-600 transition z-10" id="tab-scan">
-                <i class="fa-solid fa-qrcode mr-2"></i> Show QR
+        <div class="glass-card p-10 flex flex-col justify-center space-y-8">
+            <div class="text-center">
+                <h2 class="text-3xl font-black mb-2">IDENTIFY</h2>
+                <p class="text-slate-400">Tap your card or enter your ID</p>
+            </div>
+
+            <button id="nfcBtn" onclick="initNFC()" class="w-full py-8 bg-indigo-600 rounded-2xl flex flex-col items-center gap-3 hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-500/20">
+                <i class="fa-solid fa-wifi rotate-90 text-4xl"></i>
+                <span class="font-bold text-lg tracking-widest" id="nfcText">ACTIVATE NFC</span>
             </button>
-            <button onclick="switchTab('action')" class="flex-1 py-2 rounded-md text-sm font-bold text-gray-600 transition z-10" id="tab-action">
-                <i class="fa-solid fa-user-check mr-2"></i> Check In/Out
-            </button>
-            <div id="slider" class="absolute w-1/2 h-full top-0 left-0 p-1 transition-all duration-300">
-                <div class="bg-white shadow-sm w-full h-full rounded-md"></div>
+
+            <div class="relative py-4 flex items-center">
+                <div class="flex-grow border-t border-slate-700"></div>
+                <span class="px-4 text-xs text-slate-500 font-bold uppercase">Manual</span>
+                <div class="flex-grow border-t border-slate-700"></div>
+            </div>
+
+            <div class="space-y-4">
+                <input type="text" id="empId" placeholder="EMPLOYEE ID" class="w-full bg-slate-800 border-2 border-slate-700 p-5 rounded-xl text-center text-2xl font-bold uppercase tracking-widest outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="submitLog('Time In')" class="btn-action bg-emerald-500 hover:bg-emerald-600 p-5 rounded-xl font-black text-white shadow-lg shadow-emerald-500/20">CLOCK IN</button>
+                    <button onclick="submitLog('Time Out')" class="btn-action bg-rose-500 hover:bg-rose-600 p-5 rounded-xl font-black text-white shadow-lg shadow-rose-500/20">CLOCK OUT</button>
+                    <button onclick="submitLog('Lunch Out')" class="btn-action bg-amber-500 hover:bg-amber-600 p-4 rounded-xl font-bold text-white col-span-2">LUNCH BREAK</button>
+                </div>
             </div>
         </div>
 
-        <div id="view-scan" class="glass-card p-8 text-center space-y-6">
-            <h2 class="text-2xl font-bold text-gray-800">Scan to Attend</h2>
-            <p class="text-gray-500 text-sm">Open your camera and scan the code below to log your attendance on your phone.</p>
-            
-            <div class="flex justify-center my-4">
-                <div id="qrcode" class="p-4 bg-white border-2 border-gray-100 rounded-xl shadow-inner"></div>
+        <div class="glass-card p-10 flex flex-col items-center justify-center text-center space-y-8">
+            <div class="bg-white p-4 rounded-3xl shadow-2xl">
+                <div id="qrcode"></div>
             </div>
-            
-            <p class="text-xs text-gray-400 mt-4">Make sure this device is connected to the internet.</p>
-        </div>
-
-        <div id="view-action" class="glass-card p-8 hidden relative overflow-hidden">
-            <div id="loader" class="absolute inset-0 bg-white/90 z-20 flex items-center justify-center hidden">
-                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-600"></i>
+            <div>
+                <h3 class="text-2xl font-bold mb-2">MOBILE ACCESS</h3>
+                <p class="text-slate-400 max-w-xs">Scan this code to use your personal smartphone as a terminal.</p>
             </div>
-
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">Hello there! 👋</h2>
-                <p class="text-gray-500 text-sm">Enter your ID to log your status.</p>
-            </div>
-
-            <form id="attendanceForm" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Employee ID</label>
-                    <div class="relative">
-                        <span class="absolute left-3 top-3 text-gray-400"><i class="fa-solid fa-id-badge"></i></span>
-                        <input type="text" id="empId" placeholder="EMP001" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase font-bold text-gray-700 tracking-wider">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button type="button" onclick="logAction('Time In')" class="btn-action bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl flex flex-col items-center gap-2 shadow-lg shadow-green-500/30">
-                        <i class="fa-solid fa-sun text-2xl"></i>
-                        <span class="font-bold text-sm">Time In</span>
-                    </button>
-                    
-                    <button type="button" onclick="logAction('Time Out')" class="btn-action bg-gray-700 hover:bg-gray-800 text-white p-4 rounded-xl flex flex-col items-center gap-2 shadow-lg shadow-gray-500/30">
-                        <i class="fa-solid fa-moon text-2xl"></i>
-                        <span class="font-bold text-sm">Time Out</span>
-                    </button>
-
-                    <button type="button" onclick="logAction('Lunch Out')" class="btn-action bg-yellow-400 hover:bg-yellow-500 text-white p-3 rounded-xl flex flex-col items-center gap-1 shadow-lg shadow-yellow-500/30">
-                        <i class="fa-solid fa-burger"></i>
-                        <span class="font-bold text-xs">Lunch Out</span>
-                    </button>
-
-                    <button type="button" onclick="logAction('Lunch Back')" class="btn-action bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-xl flex flex-col items-center gap-1 shadow-lg shadow-blue-500/30">
-                        <i class="fa-solid fa-briefcase"></i>
-                        <span class="font-bold text-xs">Back to Work</span>
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 transition-all duration-300 opacity-0 translate-y-10 pointer-events-none z-50">
-        <i class="fa-solid fa-circle-check text-green-400"></i>
-        <span id="toastMsg" class="font-medium text-sm">Success</span>
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 px-8 py-4 rounded-full font-bold shadow-2xl transition-all duration-500 opacity-0 translate-y-20 flex items-center gap-3">
+        <i id="toastIcon" class="fa-solid"></i>
+        <span id="toastMsg">Success</span>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        // 1. CONFIGURATION (Must match Admin Portal)
+        // --- CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyAxBT0oESoL62oz_x_Z8cMtdENWZPx4tMI",
             authDomain: "pinotp-d7ef5.firebaseapp.com",
@@ -116,60 +99,74 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 2. UI LOGIC
-        
-        // Clock
-        setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-        }, 1000);
-
-        // Tab Switcher
-        function switchTab(mode) {
-            const scanView = document.getElementById('view-scan');
-            const actionView = document.getElementById('view-action');
-            const slider = document.getElementById('slider');
-
-            if(mode === 'scan') {
-                scanView.classList.remove('hidden');
-                actionView.classList.add('hidden');
-                slider.style.transform = 'translateX(0%)';
-            } else {
-                scanView.classList.add('hidden');
-                actionView.classList.remove('hidden');
-                slider.style.transform = 'translateX(100%)';
-            }
+        // --- CLOCK ---
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour12: false});
+            document.getElementById('date').innerText = now.toLocaleDateString([], {weekday: 'long', month: 'short', day: 'numeric'});
         }
+        setInterval(updateClock, 1000);
+        updateClock();
 
-        // Generate QR Code
-        // NOTE: For this to work on a phone, this file must be HOSTED (e.g. GitHub Pages, Vercel)
-        // If you open file:// on your laptop, the QR code will point to file:// which the phone cannot open.
-        const currentUrl = window.location.href;
+        // --- QR CODE ---
         new QRCode(document.getElementById("qrcode"), {
-            text: currentUrl,
-            width: 180,
-            height: 180,
-            colorDark : "#2563eb",
+            text: window.location.href,
+            width: 220,
+            height: 220,
+            colorDark : "#0f172a",
             colorLight : "#ffffff",
             correctLevel : QRCode.CorrectLevel.H
         });
 
-        // 3. ACTION LOGIC
-        function logAction(actionType) {
-            const idInput = document.getElementById('empId');
-            const empId = idInput.value.trim().toUpperCase();
-            
-            if(!empId) {
-                showToast('Please enter your Employee ID', true);
+        // --- NFC LOGIC ---
+        async function initNFC() {
+            const btn = document.getElementById('nfcBtn');
+            const txt = document.getElementById('nfcText');
+
+            if (!('NDEFReader' in window)) {
+                showToast("NFC not supported on this browser/device", true);
                 return;
             }
 
-            document.getElementById('loader').classList.remove('hidden');
+            try {
+                const ndef = new NDEFReader();
+                await ndef.scan();
+                
+                btn.classList.add('nfc-pulse', 'bg-emerald-600');
+                btn.classList.remove('bg-indigo-600');
+                txt.innerText = "READY TO TAP";
 
-            // 1. Verify Employee Exists
+                ndef.onreading = event => {
+                    const decoder = new TextDecoder();
+                    for (const record of event.message.records) {
+                        if (record.recordType === "text") {
+                            const empId = decoder.decode(record.data);
+                            document.getElementById('empId').value = empId.trim().toUpperCase();
+                            showToast("Card Read Success!");
+                            // Play Beep
+                            new Audio('https://www.soundjay.com/buttons/beep-07.mp3').play();
+                        }
+                    }
+                };
+            } catch (error) {
+                showToast("NFC Permission Denied", true);
+            }
+        }
+
+        // --- DATA SUBMISSION ---
+        function submitLog(action) {
+            const empIdInput = document.getElementById('empId');
+            const empId = empIdInput.value.trim().toUpperCase();
+
+            if (!empId) {
+                showToast("Please provide an ID", true);
+                return;
+            }
+
+            // 1. Verify if employee exists in the registry
             db.ref('employees/' + empId).once('value', (snap) => {
-                if(!snap.exists()) {
-                    document.getElementById('loader').classList.add('hidden');
-                    showToast('Invalid Employee ID', true);
+                if (!snap.exists()) {
+                    showToast("Employee ID not found", true);
                     return;
                 }
 
@@ -177,50 +174,41 @@
                 const today = new Date().toISOString().split('T')[0];
                 const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
-                // 2. Prepare Data
-                const updateData = {
-                    lastAction: actionType,
+                const updatePayload = {
+                    lastAction: action,
                     id: empId,
-                    name: empData.name, // Log name here so we don't have to look it up later
+                    name: empData.name,
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 };
 
-                // Add specific time fields based on button clicked
-                if(actionType === 'Time In') updateData.TimeIn = nowTime;
-                if(actionType === 'Lunch Out') updateData.LunchOut = nowTime;
-                if(actionType === 'Lunch Back') updateData.LunchBack = nowTime;
-                if(actionType === 'Time Out') updateData.TimeOut = nowTime;
+                // Specific column mapping
+                if (action === 'Time In') updatePayload.TimeIn = nowTime;
+                if (action === 'Lunch Out') updatePayload.LunchOut = nowTime;
+                if (action === 'Lunch Back') updatePayload.LunchBack = nowTime;
+                if (action === 'Time Out') updatePayload.TimeOut = nowTime;
 
-                // 3. Send to Firebase (Updates specific fields, merges with existing)
-                db.ref(`attendance/${today}/${empId}`).update(updateData)
-                .then(() => {
-                    document.getElementById('loader').classList.add('hidden');
-                    showToast(`${actionType} Recorded!`);
-                    idInput.value = ''; // Clear input
-                })
-                .catch((error) => {
-                    document.getElementById('loader').classList.add('hidden');
-                    showToast('Error: ' + error.message, true);
-                });
+                // 2. Push data to admin database
+                db.ref(`attendance/${today}/${empId}`).update(updatePayload)
+                    .then(() => {
+                        showToast(`${action} Confirmed for ${empData.name}`);
+                        empIdInput.value = ""; // Clear for next person
+                    })
+                    .catch(() => showToast("Database Error", true));
             });
         }
 
-        // Toast Notification
+        // --- UI FEEDBACK ---
         function showToast(msg, isError = false) {
             const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toastMsg');
+            const icon = document.getElementById('toastIcon');
             
-            toastMsg.innerText = msg;
-            if(isError) {
-                toast.querySelector('i').className = "fa-solid fa-circle-exclamation text-red-400";
-            } else {
-                toast.querySelector('i').className = "fa-solid fa-circle-check text-green-400";
-            }
+            document.getElementById('toastMsg').innerText = msg;
+            toast.className = `fixed bottom-10 left-1/2 -translate-x-1/2 px-8 py-4 rounded-full font-bold shadow-2xl transition-all duration-500 z-50 flex items-center gap-3 ${isError ? 'bg-rose-600' : 'bg-emerald-600'}`;
+            icon.className = `fa-solid ${isError ? 'fa-circle-xmark' : 'fa-circle-check'}`;
 
-            toast.classList.remove('opacity-0', 'translate-y-10');
-            
+            toast.classList.remove('opacity-0', 'translate-y-20');
             setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-10');
+                toast.classList.add('opacity-0', 'translate-y-20');
             }, 3000);
         }
     </script>
