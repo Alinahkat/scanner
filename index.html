@@ -9,190 +9,191 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+        :root {
+            --brand-blue: #2563eb;
+            --brand-dark: #0f172a;
+            --brand-glass: rgba(255, 255, 255, 0.03);
+        }
 
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: #0f172a;
+            background-color: var(--brand-dark);
+            color: white;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
         }
 
-        /* Modern Animated Mesh Background */
-        .bg-gradient {
+        /* Modern Mesh Gradient Background */
+        .mesh-bg {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: -1;
-            background: radial-gradient(circle at 0% 0%, #1e293b 0%, transparent 50%),
-                        radial-gradient(circle at 100% 100%, #1e3a8a 0%, transparent 50%),
-                        radial-gradient(circle at 100% 0%, #0f172a 0%, transparent 50%),
-                        radial-gradient(circle at 0% 100%, #312e81 0%, transparent 50%);
-            background-color: #020617;
+            background: 
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(29, 78, 216, 0.1) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(15, 23, 42, 1) 0px, transparent 100%);
         }
 
-        .blob {
-            position: absolute;
-            width: 500px;
-            height: 500px;
-            background: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%);
-            filter: blur(80px);
-            opacity: 0.15;
-            border-radius: 50%;
-            animation: move 20s infinite alternate;
+        /* Floating Animation for QR view */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
         }
 
-        @keyframes move {
-            from { transform: translate(-10%, -10%); }
-            to { transform: translate(20%, 20%); }
-        }
-
-        /* Glassmorphism Effect */
         .glass-card { 
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 2rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            background: var(--brand-glass);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 2.5rem;
+            box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.7);
         }
 
-        /* Button Interaction Animations */
+        /* Tactical Button Animations */
         .btn-action { 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
-            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
         
         .btn-action:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
-            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
+            transform: translateY(-3px) scale(1.02);
+            filter: contrast(1.1) brightness(1.1);
         }
 
         .btn-action:active { 
-            transform: scale(0.92); 
-            filter: brightness(0.9);
+            transform: scale(0.9) translateY(2px); 
+            filter: brightness(0.8);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
         }
 
-        /* Custom Inner Glow for Inputs */
-        .input-glass {
+        /* Input Styling */
+        .input-field {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: white;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
         }
 
-        .input-glass:focus {
+        .input-field:focus {
             background: rgba(255, 255, 255, 0.08);
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+            border-color: var(--brand-blue);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
         }
 
-        #qrcode img {
-            border-radius: 12px;
-            mix-blend-mode: multiply;
+        #qrcode {
+            background: white;
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: float 6s ease-in-out infinite;
         }
     </style>
 </head>
-<body class="h-screen flex flex-col justify-center items-center p-6 relative">
+<body>
 
-    <div class="bg-gradient"></div>
-    <div class="blob"></div>
+    <div class="mesh-bg"></div>
 
-    <div class="absolute top-0 w-full p-8 flex justify-between items-center">
+    <div class="absolute top-0 w-full p-8 flex justify-between items-center z-20">
         <div class="flex items-center gap-3">
-            <div class="bg-blue-600/20 p-2 rounded-xl backdrop-blur-md border border-blue-500/30">
-                <i class="fa-solid fa-fingerprint text-blue-400 text-2xl"></i>
+            <div class="bg-blue-600 p-2.5 rounded-2xl shadow-lg shadow-blue-600/20">
+                <i class="fa-solid fa-fingerprint text-white text-xl"></i>
             </div>
             <span class="font-extrabold text-white tracking-widest text-lg">ATTENDANCE<span class="text-blue-500">HUB</span></span>
         </div>
-        <div class="text-sm font-bold font-mono text-blue-100 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-full backdrop-blur-xl shadow-lg" id="clock">00:00:00</div>
+        <div class="text-xs font-black bg-white/5 border border-white/10 px-5 py-2.5 rounded-2xl backdrop-blur-md text-blue-400" id="clock">00:00:00</div>
     </div>
 
-    <div class="w-full max-w-md z-10">
+    <div class="w-full max-w-md px-4 z-10">
         
-        <div class="flex bg-white/5 p-1.5 rounded-2xl mb-8 relative border border-white/10 backdrop-blur-md">
-            <button onclick="switchTab('scan')" class="flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-white transition z-10" id="tab-scan">
-                <i class="fa-solid fa-qrcode mr-2 opacity-70"></i> Show QR
+        <div class="flex bg-black/20 p-1.5 rounded-3xl mb-8 relative border border-white/5">
+            <button onclick="switchTab('scan')" class="flex-1 py-3 rounded-2xl text-xs font-bold uppercase tracking-widest text-white transition z-10" id="tab-scan">
+                Show QR
             </button>
-            <button onclick="switchTab('action')" class="flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-gray-400 transition z-10" id="tab-action">
-                <i class="fa-solid fa-user-check mr-2 opacity-70"></i> Check In/Out
+            <button onclick="switchTab('action')" class="flex-1 py-3 rounded-2xl text-xs font-bold uppercase tracking-widest text-gray-500 transition z-10" id="tab-action">
+                Manual Entry
             </button>
-            <div id="slider" class="absolute w-[calc(50%-6px)] h-[calc(100%-12px)] top-[6px] left-[6px] transition-all duration-500 ease-out">
-                <div class="bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.4)] w-full h-full rounded-xl"></div>
+            <div id="slider" class="absolute w-[calc(50%-6px)] h-[calc(100%-12px)] top-[6px] left-[6px] transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1)">
+                <div class="bg-blue-600 shadow-xl shadow-blue-600/30 w-full h-full rounded-2xl"></div>
             </div>
         </div>
 
-        <div id="view-scan" class="glass-card p-10 text-center space-y-6">
+        <div id="view-scan" class="glass-card p-10 text-center space-y-8">
             <div>
-                <h2 class="text-3xl font-extrabold text-white">Scan to Attend</h2>
-                <p class="text-blue-200/60 text-sm mt-2">Log your attendance instantly via phone.</p>
+                <h2 class="text-3xl font-extrabold text-white tracking-tight">Digital Check-in</h2>
+                <p class="text-gray-400 text-sm mt-2">Scan with your mobile device to log in.</p>
             </div>
             
-            <div class="flex justify-center py-4">
-                <div class="p-5 bg-white rounded-3xl shadow-[0_0_40px_rgba(255,255,255,0.1)]">
-                    <div id="qrcode"></div>
-                </div>
+            <div class="flex justify-center">
+                <div id="qrcode"></div>
             </div>
             
-            <p class="text-[10px] uppercase tracking-[0.2em] text-blue-400/50 font-bold italic">Secure Connection Active</p>
+            <div class="flex items-center justify-center gap-2 text-blue-500/50">
+                <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span class="text-[10px] font-bold uppercase tracking-widest">Live Terminal Active</span>
+            </div>
         </div>
 
         <div id="view-action" class="glass-card p-10 hidden relative overflow-hidden">
-            <div id="loader" class="absolute inset-0 bg-slate-950/80 z-20 flex items-center justify-center hidden backdrop-blur-sm">
+            <div id="loader" class="absolute inset-0 bg-slate-900/90 z-20 flex items-center justify-center hidden backdrop-blur-sm">
                 <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500"></i>
             </div>
 
             <div class="text-center mb-8">
-                <h2 class="text-3xl font-extrabold text-white">Welcome! 👋</h2>
-                <p class="text-blue-200/60 text-sm mt-1">Please enter your credentials.</p>
+                <h2 class="text-3xl font-extrabold text-white tracking-tight">Log Status</h2>
+                <p class="text-gray-400 text-sm mt-1">Enter your ID to continue.</p>
             </div>
 
             <form id="attendanceForm" class="space-y-6">
-                <div>
-                    <label class="block text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2 ml-1">Employee ID</label>
-                    <div class="relative">
-                        <span class="absolute left-4 top-4 text-blue-400/50"><i class="fa-solid fa-id-badge"></i></span>
-                        <input type="text" id="empId" placeholder="EMP001" class="w-full pl-12 pr-4 py-4 input-glass rounded-2xl focus:outline-none uppercase font-bold text-lg tracking-widest placeholder:text-white/10">
-                    </div>
+                <div class="relative">
+                    <span class="absolute left-5 top-5 text-gray-500"><i class="fa-solid fa-id-card"></i></span>
+                    <input type="text" id="empId" placeholder="EMPLOYEE ID" class="input-field w-full pl-14 pr-4 py-5 rounded-2xl focus:outline-none uppercase font-bold text-lg tracking-widest placeholder:text-gray-700">
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <button type="button" onclick="logAction('Time In')" class="btn-action bg-emerald-500 text-white p-5 rounded-2xl flex flex-col items-center gap-2 shadow-lg shadow-emerald-500/20">
-                        <i class="fa-solid fa-sun text-2xl"></i>
-                        <span class="font-bold text-xs uppercase tracking-tighter">Time In</span>
+                    <button type="button" onclick="logAction('Time In')" class="btn-action bg-emerald-500 text-white p-5 rounded-3xl flex flex-col items-center gap-2">
+                        <i class="fa-solid fa-bolt-lightning text-xl"></i>
+                        <span class="font-bold text-[10px] uppercase tracking-wider">Time In</span>
                     </button>
                     
-                    <button type="button" onclick="logAction('Time Out')" class="btn-action bg-slate-700 text-white p-5 rounded-2xl flex flex-col items-center gap-2 shadow-lg shadow-slate-900/40">
-                        <i class="fa-solid fa-moon text-2xl"></i>
-                        <span class="font-bold text-xs uppercase tracking-tighter">Time Out</span>
+                    <button type="button" onclick="logAction('Time Out')" class="btn-action bg-slate-700 text-white p-5 rounded-3xl flex flex-col items-center gap-2">
+                        <i class="fa-solid fa-power-off text-xl"></i>
+                        <span class="font-bold text-[10px] uppercase tracking-wider">Time Out</span>
                     </button>
 
-                    <button type="button" onclick="logAction('Lunch Out')" class="btn-action bg-amber-500 text-white p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-amber-500/20">
-                        <i class="fa-solid fa-burger text-lg"></i>
+                    <button type="button" onclick="logAction('Lunch Out')" class="btn-action bg-blue-500 text-white p-4 rounded-3xl flex flex-col items-center gap-1">
+                        <i class="fa-solid fa-utensils"></i>
                         <span class="font-bold text-[10px] uppercase">Lunch Out</span>
                     </button>
 
-                    <button type="button" onclick="logAction('Lunch Back')" class="btn-action bg-blue-500 text-white p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-blue-500/20">
-                        <i class="fa-solid fa-briefcase text-lg"></i>
-                        <span class="font-bold text-[10px] uppercase">Back Work</span>
+                    <button type="button" onclick="logAction('Lunch Back')" class="btn-action bg-indigo-500 text-white p-4 rounded-3xl flex flex-col items-center gap-1">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <span class="font-bold text-[10px] uppercase">Lunch Back</span>
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 transition-all duration-500 opacity-0 translate-y-20 pointer-events-none z-50 border border-white/20">
-        <div id="toastIconCircle" class="w-8 h-8 rounded-full flex items-center justify-center">
-            <i id="toastIcon" class="fa-solid fa-check text-sm"></i>
+    <div id="toast" class="fixed bottom-10 px-8 py-4 rounded-3xl shadow-2xl flex items-center gap-4 transition-all duration-500 opacity-0 translate-y-20 pointer-events-none z-50 glass-card">
+        <div id="toastCircle" class="w-8 h-8 rounded-full flex items-center justify-center">
+            <i id="toastIcon" class="fa-solid text-sm text-white"></i>
         </div>
-        <span id="toastMsg" class="font-bold text-sm tracking-tight">Success</span>
+        <span id="toastMsg" class="font-bold text-sm text-white"></span>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        // CONFIGURATION
+        // CONFIG (Your specific config)
         const firebaseConfig = {
             apiKey: "AIzaSyAxBT0oESoL62oz_x_Z8cMtdENWZPx4tMI",
             authDomain: "pinotp-d7ef5.firebaseapp.com",
@@ -205,35 +206,35 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Clock
+        // Live Clock
         setInterval(() => {
             document.getElementById('clock').innerText = new Date().toLocaleTimeString();
         }, 1000);
 
-        // Tab Switcher
+        // Tab Navigation
         function switchTab(mode) {
             const scanView = document.getElementById('view-scan');
             const actionView = document.getElementById('view-action');
             const slider = document.getElementById('slider');
-            const tabScan = document.getElementById('tab-scan');
-            const tabAction = document.getElementById('tab-action');
+            const tScan = document.getElementById('tab-scan');
+            const tAction = document.getElementById('tab-action');
 
             if(mode === 'scan') {
                 scanView.classList.remove('hidden');
                 actionView.classList.add('hidden');
                 slider.style.transform = 'translateX(0%)';
-                tabScan.classList.replace('text-gray-400', 'text-white');
-                tabAction.classList.replace('text-white', 'text-gray-400');
+                tScan.classList.replace('text-gray-500', 'text-white');
+                tAction.classList.replace('text-white', 'text-gray-500');
             } else {
                 scanView.classList.add('hidden');
                 actionView.classList.remove('hidden');
                 slider.style.transform = 'translateX(100%)';
-                tabAction.classList.replace('text-gray-400', 'text-white');
-                tabScan.classList.replace('text-white', 'text-gray-400');
+                tAction.classList.replace('text-gray-500', 'text-white');
+                tScan.classList.replace('text-white', 'text-gray-500');
             }
         }
 
-        // Generate QR Code
+        // Generate QR
         new QRCode(document.getElementById("qrcode"), {
             text: window.location.href,
             width: 180,
@@ -243,13 +244,13 @@
             correctLevel : QRCode.CorrectLevel.H
         });
 
-        // ACTION LOGIC
+        // Attendance Logic
         function logAction(actionType) {
             const idInput = document.getElementById('empId');
             const empId = idInput.value.trim().toUpperCase();
             
             if(!empId) {
-                showToast('Please enter your Employee ID', true);
+                showToast('ID Required', true);
                 return;
             }
 
@@ -258,7 +259,7 @@
             db.ref('employees/' + empId).once('value', (snap) => {
                 if(!snap.exists()) {
                     document.getElementById('loader').classList.add('hidden');
-                    showToast('Invalid Employee ID', true);
+                    showToast('Employee Not Found', true);
                     return;
                 }
 
@@ -281,35 +282,27 @@
                 db.ref(`attendance/${today}/${empId}`).update(updateData)
                 .then(() => {
                     document.getElementById('loader').classList.add('hidden');
-                    showToast(`${actionType} Recorded!`);
+                    showToast(`${actionType} Success!`);
                     idInput.value = '';
                 })
-                .catch((error) => {
+                .catch((e) => {
                     document.getElementById('loader').classList.add('hidden');
-                    showToast('Error: ' + error.message, true);
+                    showToast('System Error', true);
                 });
             });
         }
 
-        // Toast Notification
+        // Toast Component
         function showToast(msg, isError = false) {
             const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toastMsg');
-            const toastIcon = document.getElementById('toastIcon');
-            const toastCircle = document.getElementById('toastIconCircle');
+            const icon = document.getElementById('toastIcon');
+            const circle = document.getElementById('toastCircle');
             
-            toastMsg.innerText = msg;
-            
-            if(isError) {
-                toastCircle.className = "w-8 h-8 rounded-full flex items-center justify-center bg-red-100 text-red-600";
-                toastIcon.className = "fa-solid fa-xmark";
-            } else {
-                toastCircle.className = "w-8 h-8 rounded-full flex items-center justify-center bg-emerald-100 text-emerald-600";
-                toastIcon.className = "fa-solid fa-check";
-            }
+            document.getElementById('toastMsg').innerText = msg;
+            circle.style.backgroundColor = isError ? '#ef4444' : '#10b981';
+            icon.className = isError ? "fa-solid fa-xmark" : "fa-solid fa-check";
 
             toast.classList.remove('opacity-0', 'translate-y-20');
-            
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-y-20');
             }, 3000);
