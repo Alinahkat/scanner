@@ -97,6 +97,15 @@
             object-fit: cover;
             border-radius: 12px;
         }
+
+        /* Success Animation */
+        .scale-in {
+            animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col justify-center items-center p-6 relative">
@@ -129,9 +138,23 @@
         </div>
 
         <div id="view-scan" class="glass-card p-10 text-center space-y-6 relative overflow-hidden">
-             <div id="scan-loader" class="absolute inset-0 bg-slate-950/90 z-30 flex flex-col items-center justify-center hidden backdrop-blur-md">
+            
+            <div id="scan-loader" class="absolute inset-0 bg-slate-950/90 z-30 flex flex-col items-center justify-center hidden backdrop-blur-md">
                 <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i>
-                <p class="text-white font-bold animate-pulse" id="scan-msg">Processing...</p>
+                <p class="text-white font-bold animate-pulse">Processing...</p>
+            </div>
+
+            <div id="success-modal" class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-emerald-600/95 hidden backdrop-blur-lg">
+                <div class="scale-in flex flex-col items-center text-white p-6 text-center">
+                    <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-4 shadow-xl">
+                        <i class="fa-solid fa-check text-4xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-black mb-1 uppercase tracking-tight" id="modal-action-text">Time In</h3>
+                    <p class="text-emerald-100 font-medium mb-4" id="modal-name-text">Employee Name</p>
+                    <div class="bg-white/10 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/20">
+                        Attendance Logged
+                    </div>
+                </div>
             </div>
 
             <div>
@@ -264,17 +287,13 @@
         function onScanSuccess(decodedText, decodedResult) {
             if(!decodedText) return;
             
-            // Pause scanner
             stopScanner();
-            
-            // Show Loading
             document.getElementById('scan-loader').classList.remove('hidden');
             
             const empId = decodedText.trim().toUpperCase();
             const today = new Date().toISOString().split('T')[0];
             const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
-            // 1. Check if Employee Exists
             db.ref('employees/' + empId).once('value', (empSnap) => {
                 if(!empSnap.exists()) {
                     handleScanError("Invalid Employee ID");
@@ -283,7 +302,6 @@
 
                 const empData = empSnap.val();
 
-                // 2. Check Today's Attendance State
                 db.ref(`attendance/${today}/${empId}`).once('value', (attSnap) => {
                     let actionType = "";
                     let updateData = {
@@ -294,7 +312,6 @@
 
                     const attendance = attSnap.val();
 
-                    // Determine Sequence: Time In -> Lunch Out -> Lunch Back -> Time Out
                     if (!attendance) {
                         actionType = "Time In";
                         updateData.TimeIn = nowTime;
@@ -302,22 +319,21 @@
                         actionType = "Lunch Out";
                         updateData.LunchOut = nowTime;
                     } else if (!attendance.LunchBack) {
-                        actionType = "Lunch Back"; // Back to work
+                        actionType = "Lunch Back";
                         updateData.LunchBack = nowTime;
                     } else if (!attendance.TimeOut) {
                         actionType = "Time Out";
                         updateData.TimeOut = nowTime;
                     } else {
-                        handleScanError("Attendance Complete for Today");
+                        handleScanError("Attendance Complete Today");
                         return;
                     }
 
                     updateData.lastAction = actionType;
 
-                    // 3. Update Database
                     db.ref(`attendance/${today}/${empId}`).update(updateData)
                     .then(() => {
-                        handleScanSuccess(actionType, empData.name);
+                        showSuccessModal(actionType, empData.name);
                     })
                     .catch((error) => {
                         handleScanError(error.message);
@@ -326,13 +342,20 @@
             });
         }
 
-        function handleScanSuccess(action, name) {
-            const msg = `${action} Success!\n${name}`;
+        function showSuccessModal(action, name) {
             document.getElementById('scan-loader').classList.add('hidden');
-            showToast(msg);
             
-            // Restart Scanner after delay
+            // Set Modal Data
+            document.getElementById('modal-action-text').innerText = action;
+            document.getElementById('modal-name-text').innerText = name;
+            
+            // Show Modal
+            const modal = document.getElementById('success-modal');
+            modal.classList.remove('hidden');
+
+            // Automatically hide and restart scanner
             setTimeout(() => {
+                modal.classList.add('hidden');
                 startScanner();
             }, 3000);
         }
@@ -340,14 +363,10 @@
         function handleScanError(msg) {
             document.getElementById('scan-loader').classList.add('hidden');
             showToast(msg, true);
-            setTimeout(() => {
-                startScanner();
-            }, 3000);
+            setTimeout(startScanner, 3000);
         }
 
-        function onScanFailure(error) {
-            // Quiet fail for frame errors
-        }
+        function onScanFailure(error) {}
 
         // Tab Switcher
         function switchTab(mode) {
@@ -374,15 +393,10 @@
             }
         }
 
-        // Manual Action Logic (Fallback)
         function logManualAction(actionType) {
             const idInput = document.getElementById('empId');
             const empId = idInput.value.trim().toUpperCase();
-            
-            if(!empId) {
-                showToast('Please enter Employee ID', true);
-                return;
-            }
+            if(!empId) { showToast('Please enter Employee ID', true); return; }
 
             document.getElementById('loader').classList.remove('hidden');
 
@@ -422,28 +436,22 @@
             });
         }
 
-        // Toast Notification
         function showToast(msg, isError = false) {
             const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toastMsg');
-            const toastIcon = document.getElementById('toastIcon');
-            const toastCircle = document.getElementById('toastIconCircle');
-            
-            toastMsg.innerText = msg;
+            document.getElementById('toastMsg').innerText = msg;
+            const circle = document.getElementById('toastIconCircle');
+            const icon = document.getElementById('toastIcon');
             
             if(isError) {
-                toastCircle.className = "w-8 h-8 rounded-full flex items-center justify-center bg-red-100 text-red-600";
-                toastIcon.className = "fa-solid fa-xmark";
+                circle.className = "w-8 h-8 rounded-full flex items-center justify-center bg-red-100 text-red-600";
+                icon.className = "fa-solid fa-xmark";
             } else {
-                toastCircle.className = "w-8 h-8 rounded-full flex items-center justify-center bg-emerald-100 text-emerald-600";
-                toastIcon.className = "fa-solid fa-check";
+                circle.className = "w-8 h-8 rounded-full flex items-center justify-center bg-emerald-100 text-emerald-600";
+                icon.className = "fa-solid fa-check";
             }
 
             toast.classList.remove('opacity-0', 'translate-y-20');
-            
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-20');
-            }, 3000);
+            setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-20'); }, 3000);
         }
     </script>
 </body>
