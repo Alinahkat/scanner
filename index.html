@@ -97,17 +97,37 @@
     <div class="bg-gradient"></div>
     <div class="blob"></div>
 
-    <div class="w-full max-w-md pt-4 pb-6 flex justify-between items-center px-2">
-        <div class="flex items-center gap-2">
-            <div class="bg-blue-600/20 p-2 rounded-lg backdrop-blur-md border border-blue-500/30">
-                <i class="fa-solid fa-fingerprint text-blue-400 text-xl"></i>
+    <div id="login-view" class="w-full max-w-md flex-1 flex flex-col justify-center z-50">
+        <div class="glass-card p-10 text-center space-y-8">
+            <div class="flex justify-center">
+                <div class="bg-blue-600/20 p-4 rounded-2xl backdrop-blur-md border border-blue-500/30">
+                    <i class="fa-solid fa-fingerprint text-blue-400 text-4xl"></i>
+                </div>
             </div>
-            <span class="font-extrabold text-white tracking-widest text-sm">ATTENDANCE<span class="text-blue-500">HUB</span></span>
+            <div>
+                <h1 class="text-3xl font-black text-white tracking-tight">ATTENDANCE<span class="text-blue-500">HUB</span></h1>
+                <p class="text-blue-200/60 text-sm mt-2 font-medium">Please sign in to access the portal</p>
+            </div>
+            <button onclick="signInWithGoogle()" class="w-full py-4 bg-white text-slate-900 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-blue-50 transition-all btn-action">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
+                Sign in with Google
+            </button>
         </div>
-        <div class="text-[10px] font-bold font-mono text-blue-100 bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-full" id="clock">00:00:00</div>
     </div>
 
-    <div class="w-full max-w-md z-10 flex-1 flex flex-col">
+    <div id="app-content" class="w-full max-w-md flex-1 flex flex-col hidden z-10">
+        <div class="pt-4 pb-6 flex justify-between items-center px-2">
+            <div class="flex items-center gap-2">
+                <div class="bg-blue-600/20 p-2 rounded-lg backdrop-blur-md border border-blue-500/30">
+                    <i class="fa-solid fa-fingerprint text-blue-400 text-xl"></i>
+                </div>
+                <span class="font-extrabold text-white tracking-widest text-sm">ATTENDANCE<span class="text-blue-500">HUB</span></span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="text-[10px] font-bold font-mono text-blue-100 bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-full" id="clock">00:00:00</div>
+                <button onclick="logout()" class="text-white/40 hover:text-red-400 transition-colors"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+        </div>
         
         <div class="flex bg-white/5 p-1 rounded-2xl mb-6 relative border border-white/10 backdrop-blur-md">
             <button onclick="switchTab('scan')" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition z-10" id="tab-scan">
@@ -208,6 +228,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
     <script>
         const firebaseConfig = {
@@ -221,24 +242,48 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const auth = firebase.auth();
 
+        // --- AUTH LOGIC ---
+        function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch(error => showToast(error.message, true));
+        }
+
+        function logout() {
+            auth.signOut();
+        }
+
+        auth.onAuthStateChanged((user) => {
+            const loginView = document.getElementById('login-view');
+            const appContent = document.getElementById('app-content');
+            
+            if (user) {
+                loginView.classList.add('hidden');
+                appContent.classList.remove('hidden');
+                startScanner(); // Start camera automatically upon login
+            } else {
+                stopScanner();
+                loginView.classList.remove('hidden');
+                appContent.classList.add('hidden');
+            }
+        });
+
+        // --- CLOCK ---
         setInterval(() => {
             document.getElementById('clock').innerText = new Date().toLocaleTimeString();
         }, 1000);
 
+        // --- SCANNER LOGIC ---
         let html5QrCode;
         let isScanning = false;
 
         document.addEventListener('DOMContentLoaded', () => {
              html5QrCode = new Html5Qrcode("reader");
-             if(!document.getElementById('view-scan').classList.contains('hidden')){
-                 startScanner();
-             }
         });
 
         function startScanner() {
-            if(isScanning) return;
-            // Mobile optimized qrbox size
+            if(isScanning || !auth.currentUser) return;
             const config = { fps: 15, qrbox: { width: 220, height: 220 } };
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
             .then(() => {
@@ -258,7 +303,7 @@
                     isScanning = false;
                     document.getElementById('scanner-status').innerText = "Camera Inactive";
                     html5QrCode.clear(); 
-                });
+                }).catch(() => {});
             }
         }
 
