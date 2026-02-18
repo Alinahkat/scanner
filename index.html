@@ -71,15 +71,15 @@
             z-index: 100;
         }
 
+        .active-scan-border {
+            border: 2px solid #3b82f6;
+            animation: pulse-border 2s infinite;
+        }
+
         @keyframes pulse-border {
             0% { border-color: rgba(59, 130, 246, 0.5); }
             50% { border-color: rgba(59, 130, 246, 1); }
             100% { border-color: rgba(59, 130, 246, 0.5); }
-        }
-
-        .active-scan-border {
-            border: 2px solid #3b82f6;
-            animation: pulse-border 2s infinite;
         }
     </style>
 </head>
@@ -95,10 +95,22 @@
                 </div>
             </div>
             <h1 class="text-3xl font-black text-white tracking-tight">ATTENDANCE<span class="text-blue-500">HUB</span></h1>
+            
             <div class="space-y-4 text-left">
-                <input type="email" id="auth-email" placeholder="Email Address" class="w-full px-4 py-3 input-glass rounded-xl focus:outline-none">
-                <input type="password" id="auth-password" placeholder="Password" class="w-full px-4 py-3 input-glass rounded-xl focus:outline-none">
+                <div class="relative">
+                    <input type="email" id="auth-email" placeholder="Email Address" class="w-full px-4 py-3 input-glass rounded-xl focus:outline-none">
+                </div>
+                <div class="relative">
+                    <input type="password" id="auth-password" placeholder="Password" class="w-full px-4 py-3 input-glass rounded-xl focus:outline-none">
+                    <button onclick="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors">
+                        <i id="password-toggle-icon" class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+                <div class="px-1 text-right">
+                    <button onclick="forgotPassword()" class="text-[11px] font-bold text-blue-400 uppercase tracking-widest hover:text-blue-300 transition-colors">Forgot Password?</button>
+                </div>
             </div>
+
             <div class="flex flex-col gap-3">
                 <button onclick="handleAuth('signin')" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold btn-action">Sign In</button>
                 <button onclick="handleAuth('signup')" class="w-full py-4 bg-white/10 text-white rounded-xl font-bold btn-action">Register</button>
@@ -204,7 +216,31 @@
         let html5QrCode = null;
         let isAtWorkSite = false;
 
-        // --- AUTH ---
+        // --- AUTH UI HELPERS ---
+        function togglePassword() {
+            const pwdField = document.getElementById('auth-password');
+            const icon = document.getElementById('password-toggle-icon');
+            if (pwdField.type === "password") {
+                pwdField.type = "text";
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                pwdField.type = "password";
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        async function forgotPassword() {
+            const email = document.getElementById('auth-email').value.trim();
+            if (!email) return showToast("Enter your email first");
+            
+            try {
+                await auth.sendPasswordResetEmail(email);
+                showToast("Reset link sent to your email");
+            } catch (e) {
+                showToast(e.message);
+            }
+        }
+
         async function handleAuth(type) {
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value.trim();
@@ -232,7 +268,7 @@
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const snap = await db.ref('settings/location').once('value');
                 if (!snap.exists()) {
-                    unlockScanner(); // No admin config = unlock anyway
+                    unlockScanner();
                     return;
                 }
 
