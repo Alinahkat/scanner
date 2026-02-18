@@ -66,12 +66,23 @@
 
         #reader {
             width: 100% !important;
-            border-radius: 1rem;
+            border-radius: 1.5rem;
             overflow: hidden;
             background: #000;
         }
 
-        #reader video { object-fit: cover !important; }
+        .btn-modern {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .btn-modern:hover {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
 
         .scale-in { animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes scaleIn {
@@ -85,22 +96,22 @@
     <div class="bg-gradient"></div>
     <div class="blob"></div>
 
-    <div id="login-view" class="w-full max-w-md flex-1 flex flex-col justify-center z-50">
+    <div id="login-view" class="w-full max-w-md flex-1 flex flex-col justify-center z-50 hidden">
         <div class="glass-card p-10 text-center space-y-6">
             <div class="flex justify-center">
                 <div class="bg-blue-600/20 p-4 rounded-2xl backdrop-blur-md border border-blue-500/30">
-                    <i class="fa-solid fa-fingerprint text-blue-400 text-4xl"></i>
+                    <i class="fa-solid fa-user-plus text-blue-400 text-4xl"></i>
                 </div>
             </div>
             <div>
                 <h1 class="text-3xl font-black text-white tracking-tight">ATTENDANCE<span class="text-blue-500">HUB</span></h1>
-                <p class="text-blue-200/60 text-sm mt-2 font-medium">Secure Access Portal</p>
+                <p class="text-blue-200/60 text-sm mt-2 font-medium">One-Time Registration</p>
             </div>
 
             <div class="space-y-4 text-left">
                 <div>
                     <label class="text-[10px] font-bold text-blue-400 uppercase tracking-widest ml-1">Email Address</label>
-                    <input type="email" id="auth-email" placeholder="email@company.com" class="w-full px-4 py-3 mt-1 input-glass rounded-xl focus:outline-none">
+                    <input type="email" id="auth-email" placeholder="name@company.com" class="w-full px-4 py-3 mt-1 input-glass rounded-xl focus:outline-none">
                 </div>
                 <div class="relative">
                     <label class="text-[10px] font-bold text-blue-400 uppercase tracking-widest ml-1">Password</label>
@@ -118,7 +129,6 @@
                 <button onclick="handleAuth('signin')" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold btn-action shadow-xl">Sign In</button>
                 <button onclick="handleAuth('signup')" class="w-full py-4 bg-white/10 text-white rounded-xl font-bold btn-action border border-white/10">Register Account</button>
             </div>
-            <p class="text-[9px] text-white/30 uppercase tracking-widest">Location access required for sign-in</p>
         </div>
     </div>
 
@@ -128,21 +138,17 @@
                 <div class="bg-blue-600/20 p-2 rounded-lg border border-blue-500/30">
                     <i class="fa-solid fa-fingerprint text-blue-400 text-xl"></i>
                 </div>
-                <span class="font-extrabold text-white tracking-widest text-sm">ATTENDANCE<span class="text-blue-500">HUB</span></span>
+                <span class="font-extrabold text-white tracking-widest text-sm uppercase">Portal</span>
             </div>
             <div class="flex items-center gap-3">
                 <div class="text-[10px] font-bold font-mono text-blue-100 bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-full" id="clock">00:00:00</div>
-                <button onclick="logout()" class="text-white/40 hover:text-red-400 transition-colors"><i class="fa-solid fa-right-from-bracket"></i></button>
+                <button onclick="logout()" class="text-white/40 hover:text-red-400"><i class="fa-solid fa-power-off"></i></button>
             </div>
         </div>
         
         <div class="flex bg-white/5 p-1 rounded-2xl mb-6 relative border border-white/10 backdrop-blur-md">
-            <button onclick="switchTab('scan')" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition z-10" id="tab-scan">
-                <i class="fa-solid fa-expand mr-1.5 opacity-70"></i> Scan QR
-            </button>
-            <button onclick="switchTab('action')" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 transition z-10" id="tab-action">
-                <i class="fa-solid fa-list-check mr-1.5 opacity-70"></i> Manual
-            </button>
+            <button onclick="switchTab('scan')" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition z-10" id="tab-scan">Scan QR</button>
+            <button onclick="switchTab('action')" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 transition z-10" id="tab-action">Manual</button>
             <div id="slider" class="absolute w-[calc(50%-4px)] h-[calc(100%-8px)] top-[4px] left-[4px] transition-all duration-500 ease-out">
                 <div class="bg-blue-600 shadow-lg w-full h-full rounded-xl"></div>
             </div>
@@ -150,58 +156,94 @@
 
         <div id="view-scan" class="glass-card p-6 text-center space-y-6 relative overflow-hidden flex-1 flex flex-col justify-center">
             <div id="scan-loader" class="absolute inset-0 bg-slate-950/90 z-30 flex flex-col items-center justify-center hidden backdrop-blur-md">
-                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i>
-                <p class="text-white font-bold animate-pulse text-sm">Processing...</p>
+                <i class="fa-solid fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
+                <p class="text-white font-bold animate-pulse text-sm">Verifying QR Match...</p>
             </div>
 
             <div id="success-modal" class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-emerald-600/95 hidden backdrop-blur-lg">
-                <div class="scale-in flex flex-col items-center text-white p-6 text-center">
-                    <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
-                        <i class="fa-solid fa-check text-3xl"></i>
-                    </div>
-                    <h3 class="text-xl font-black mb-1 uppercase tracking-tight" id="modal-action-text">Logged</h3>
-                    <p class="text-emerald-100 text-sm font-medium mb-4" id="modal-name-text">Employee</p>
+                <div class="scale-in flex flex-col items-center text-white text-center p-6">
+                    <i class="fa-solid fa-check-double text-6xl mb-4"></i>
+                    <h3 class="text-2xl font-black uppercase tracking-tight" id="modal-action-text">Action Logged</h3>
+                    <p class="text-emerald-100 mt-2 font-medium" id="modal-name-text"></p>
                 </div>
             </div>
 
             <div class="py-2">
-                <h2 class="text-2xl font-extrabold text-white">Scan ID Badge</h2>
-                <p class="text-blue-200/60 text-xs mt-1">Camera activates automatically</p>
+                <h2 class="text-2xl font-extrabold text-white">Device Pairing</h2>
+                <p class="text-blue-200/60 text-xs mt-1">Scan the QR code assigned to your ID</p>
             </div>
             
             <div class="flex justify-center">
-                <div class="p-1.5 bg-white/10 rounded-2xl w-full aspect-square max-w-[280px] flex items-center justify-center overflow-hidden relative">
+                <div class="p-1.5 bg-white/10 rounded-[2rem] w-full aspect-square max-w-[280px] overflow-hidden relative shadow-2xl">
                     <div id="reader"></div>
                 </div>
             </div>
-            
-            <p class="text-[9px] uppercase tracking-[0.2em] text-blue-400/50 font-bold italic" id="scanner-status">Initializing...</p>
+            <p class="text-[10px] uppercase tracking-[0.3em] text-blue-400/50 font-black" id="scanner-status">Scanner Ready</p>
         </div>
 
         <div id="view-action" class="glass-card p-8 hidden relative overflow-hidden">
-            <div id="loader" class="absolute inset-0 bg-slate-950/80 z-20 flex items-center justify-center hidden backdrop-blur-sm">
+            <div id="loader" class="absolute inset-0 bg-slate-950/80 z-20 flex items-center justify-center hidden">
                 <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500"></i>
             </div>
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-extrabold text-white">Manual Entry</h2>
+            <h2 class="text-xl font-extrabold text-white text-center mb-8 uppercase tracking-widest">Attendance Logs</h2>
+            <div class="space-y-4">
+                <button onclick="logManualAction('Time In')" class="w-full btn-modern p-5 rounded-2xl flex items-center justify-between group">
+                    <div class="flex items-center gap-5">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
+                            <i class="fa-solid fa-sun text-xl"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-white font-bold text-sm">Start Shift</p>
+                            <p class="text-white/30 text-[9px] uppercase font-black tracking-widest">Time In</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-white/10 group-hover:translate-x-1 transition-transform"></i>
+                </button>
+
+                <button onclick="logManualAction('Lunch Out')" class="w-full btn-modern p-5 rounded-2xl flex items-center justify-between group">
+                    <div class="flex items-center gap-5">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-400 border border-amber-500/20">
+                            <i class="fa-solid fa-utensils text-xl"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-white font-bold text-sm">Lunch Break</p>
+                            <p class="text-white/30 text-[9px] uppercase font-black tracking-widest">Lunch Out</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-white/10 group-hover:translate-x-1 transition-transform"></i>
+                </button>
+
+                <button onclick="logManualAction('Lunch Back')" class="w-full btn-modern p-5 rounded-2xl flex items-center justify-between group">
+                    <div class="flex items-center gap-5">
+                        <div class="w-12 h-12 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-400 border border-blue-500/20">
+                            <i class="fa-solid fa-clock-rotate-left text-xl"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-white font-bold text-sm">Return to Work</p>
+                            <p class="text-white/30 text-[9px] uppercase font-black tracking-widest">Lunch Back</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-white/10 group-hover:translate-x-1 transition-transform"></i>
+                </button>
+
+                <button onclick="logManualAction('Time Out')" class="w-full btn-modern p-5 rounded-2xl flex items-center justify-between group">
+                    <div class="flex items-center gap-5">
+                        <div class="w-12 h-12 rounded-2xl bg-red-500/20 flex items-center justify-center text-red-400 border border-red-500/20">
+                            <i class="fa-solid fa-moon text-xl"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-white font-bold text-sm">End Shift</p>
+                            <p class="text-white/30 text-[9px] uppercase font-black tracking-widest">Time Out</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-white/10 group-hover:translate-x-1 transition-transform"></i>
+                </button>
             </div>
-            <form id="attendanceForm" class="space-y-5">
-                <div>
-                    <label class="block text-[9px] font-black text-blue-400 uppercase tracking-widest mb-2 ml-1">Employee ID</label>
-                    <input type="text" id="empId" placeholder="EMP001" class="w-full px-4 py-4 input-glass rounded-xl focus:outline-none uppercase font-bold text-base tracking-widest">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <button type="button" onclick="logManualAction('Time In')" class="btn-action bg-emerald-500 text-white p-4 rounded-xl font-bold text-[10px] uppercase">Time In</button>
-                    <button type="button" onclick="logManualAction('Time Out')" class="btn-action bg-slate-700 text-white p-4 rounded-xl font-bold text-[10px] uppercase">Time Out</button>
-                    <button type="button" onclick="logManualAction('Lunch Out')" class="btn-action bg-amber-500 text-white p-4 rounded-xl font-bold text-[10px] uppercase">Lunch Out</button>
-                    <button type="button" onclick="logManualAction('Lunch Back')" class="btn-action bg-blue-500 text-white p-4 rounded-xl font-bold text-[10px] uppercase">Back Work</button>
-                </div>
-            </form>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-6 left-4 right-4 bg-white text-slate-900 px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-500 opacity-0 translate-y-10 pointer-events-none z-50 max-w-md mx-auto">
-        <span id="toastMsg" class="font-bold text-xs tracking-tight">Notification</span>
+    <div id="toast" class="fixed bottom-6 left-4 right-4 bg-white text-slate-900 px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-500 opacity-0 translate-y-10 pointer-events-none z-[100] max-w-md mx-auto font-bold text-xs uppercase">
+        <span id="toastMsg">Notification</span>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -222,87 +264,63 @@
         const db = firebase.database();
         const auth = firebase.auth();
 
+        // Enable Session Persistence (Local = stays logged in)
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+        let currentUserData = null;
         let html5QrCode = null;
         let isScanning = false;
 
         // --- AUTH ---
         function togglePassword() {
             const p = document.getElementById('auth-password');
-            const i = document.getElementById('password-icon');
-            if (p.type === 'password') {
-                p.type = 'text';
-                i.classList.replace('fa-eye', 'fa-eye-slash');
-            } else {
-                p.type = 'password';
-                i.classList.replace('fa-eye-slash', 'fa-eye');
-            }
+            p.type = p.type === 'password' ? 'text' : 'password';
         }
 
         async function forgotPassword() {
             const email = document.getElementById('auth-email').value.trim();
             if(!email) return showToast("Enter email first");
-            try {
-                await auth.sendPasswordResetEmail(email);
-                showToast("Reset link sent to email");
-            } catch (e) { showToast(e.message); }
+            auth.sendPasswordResetEmail(email).then(() => showToast("Reset Link Sent")).catch(e => showToast(e.message));
         }
 
         async function handleAuth(type) {
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value.trim();
-            if (!email || !password) return showToast("Enter all fields");
+            if (!email || !password) return showToast("Fields Required");
 
             try {
+                // Verify against Admin Dashboard list
                 const empSnap = await db.ref('employees').orderByChild('email').equalTo(email).once('value');
-                if (!empSnap.exists()) return showToast("Email not registered by Admin");
-
-                const pos = await getCurrentLocation();
-                const isAtLocation = await verifyWorkLocation(pos.coords.latitude, pos.coords.longitude);
-                if (!isAtLocation) return showToast("Not at work location");
+                if (!empSnap.exists()) return showToast("Email not found in admin registry");
 
                 if (type === 'signup') {
                     await auth.createUserWithEmailAndPassword(email, password);
-                    showToast("Registered Successfully");
+                    // Update admin dashboard to mark as registered
+                    const key = Object.keys(empSnap.val())[0];
+                    await db.ref(`employees/${key}`).update({ registered: true, registerDate: Date.now() });
+                    showToast("Registration Complete");
                 } else {
                     await auth.signInWithEmailAndPassword(email, password);
                 }
             } catch (e) { showToast(e.message); }
         }
 
-        function getCurrentLocation() {
-            return new Promise((res, rej) => {
-                if (!navigator.geolocation) rej(new Error("No Geolocation Support"));
-                navigator.geolocation.getCurrentPosition(res, rej);
-            });
-        }
-
-        async function verifyWorkLocation(lat, lon) {
-            const snap = await db.ref('settings/location').once('value');
-            if (!snap.exists()) return true;
-            const config = snap.val();
-            const dist = calculateDistance(lat, lon, config.lat, config.lon);
-            return dist <= (config.radius || 100);
-        }
-
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3;
-            const dLat = (lat2-lat1) * Math.PI/180;
-            const dLon = (lon2-lon1) * Math.PI/180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
-                      Math.sin(dLon/2) * Math.sin(dLon/2);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-
-        function logout() { auth.signOut(); }
-
-        auth.onAuthStateChanged((user) => {
+        // --- SESSION PERSISTENCE ---
+        auth.onAuthStateChanged(async (user) => {
             const loginView = document.getElementById('login-view');
             const appContent = document.getElementById('app-content');
             if (user) {
-                loginView.classList.add('hidden');
-                appContent.classList.remove('hidden');
-                setTimeout(startScanner, 800);
+                // Fetch full info from Admin node
+                const snap = await db.ref('employees').orderByChild('email').equalTo(user.email).once('value');
+                if (snap.exists()) {
+                    const data = snap.val();
+                    const key = Object.keys(data)[0];
+                    currentUserData = { ...data[key], id: key };
+                    
+                    loginView.classList.add('hidden');
+                    appContent.classList.remove('hidden');
+                    switchTab('scan');
+                }
             } else {
                 stopScanner();
                 loginView.classList.remove('hidden');
@@ -310,14 +328,16 @@
             }
         });
 
-        // --- SCANNER & ATTENDANCE ---
+        function logout() { auth.signOut(); }
+
+        // --- SCANNER LOGIC (STRICT QR MATCH) ---
         async function startScanner() {
             if(isScanning) return;
             try {
                 if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-                await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, onScanSuccess);
+                await html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 250 }, onScanSuccess);
                 isScanning = true;
-                document.getElementById('scanner-status').innerText = "Scanning Active...";
+                document.getElementById('scanner-status').innerText = "LIVE SCANNING";
             } catch (err) { console.error(err); }
         }
 
@@ -328,35 +348,39 @@
         }
 
         function onScanSuccess(decodedText) {
-            if(!decodedText) return;
+            const scannedId = decodedText.trim().toUpperCase();
+            
+            // Security: QR must match the logged-in User's ID or Email
+            if (scannedId !== currentUserData.id && decodedText !== currentUserData.email) {
+                showToast("Access Denied: QR does not match your account");
+                return;
+            }
+
             stopScanner();
             document.getElementById('scan-loader').classList.remove('hidden');
-            const empId = decodedText.trim().toUpperCase();
+            
             const today = new Date().toISOString().split('T')[0];
             const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
-            db.ref('employees/' + empId).once('value', (empSnap) => {
-                if(!empSnap.exists()) return handleScanError("Invalid ID");
-                const empData = empSnap.val();
-                db.ref(`attendance/${today}/${empId}`).once('value', (attSnap) => {
-                    let actionType = "";
-                    let updateData = { id: empId, name: empData.name, timestamp: firebase.database.ServerValue.TIMESTAMP };
-                    const attendance = attSnap.val();
+            db.ref(`attendance/${today}/${currentUserData.id}`).once('value', (attSnap) => {
+                let action = "";
+                let update = { name: currentUserData.name, timestamp: firebase.database.ServerValue.TIMESTAMP };
+                const att = attSnap.val();
 
-                    if (!attendance) { actionType = "Time In"; updateData.TimeIn = nowTime; }
-                    else if (!attendance.LunchOut) { actionType = "Lunch Out"; updateData.LunchOut = nowTime; }
-                    else if (!attendance.LunchBack) { actionType = "Lunch Back"; updateData.LunchBack = nowTime; }
-                    else if (!attendance.TimeOut) { actionType = "Time Out"; updateData.TimeOut = nowTime; }
-                    else return handleScanError("Already Done");
+                if (!att) { action = "Time In"; update.TimeIn = nowTime; }
+                else if (!att.LunchOut) { action = "Lunch Out"; update.LunchOut = nowTime; }
+                else if (!att.LunchBack) { action = "Lunch Back"; update.LunchBack = nowTime; }
+                else if (!att.TimeOut) { action = "Time Out"; update.TimeOut = nowTime; }
+                else { handleScanError("Full Daily Logs Recorded"); return; }
 
-                    updateData.lastAction = actionType;
-                    db.ref(`attendance/${today}/${empId}`).update(updateData).then(() => {
-                        showSuccessModal(actionType, empData.name);
-                    });
+                update.lastAction = action;
+                db.ref(`attendance/${today}/${currentUserData.id}`).update(update).then(() => {
+                    showSuccessModal(action, currentUserData.name);
                 });
             });
         }
 
+        // --- UI UTILS ---
         function switchTab(mode) {
             const scanView = document.getElementById('view-scan');
             const actionView = document.getElementById('view-action');
@@ -384,28 +408,26 @@
             showToast(msg); setTimeout(startScanner, 3000);
         }
 
-        function logManualAction(actionType) {
-            const empId = document.getElementById('empId').value.trim().toUpperCase();
-            if(!empId) return showToast("Enter ID");
+        function logManualAction(type) {
+            if(!currentUserData) return;
             document.getElementById('loader').classList.remove('hidden');
             const today = new Date().toISOString().split('T')[0];
             const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-            db.ref('employees/' + empId).once('value', snap => {
-                if(!snap.exists()) { document.getElementById('loader').classList.add('hidden'); return showToast("Invalid ID"); }
-                const update = { lastAction: actionType, timestamp: firebase.database.ServerValue.TIMESTAMP };
-                update[actionType.replace(' ', '')] = nowTime;
-                db.ref(`attendance/${today}/${empId}`).update(update).then(() => {
-                    document.getElementById('loader').classList.add('hidden');
-                    showToast(actionType + " Recorded");
-                });
+            
+            const update = { lastAction: type, timestamp: firebase.database.ServerValue.TIMESTAMP };
+            update[type.replace(' ', '')] = nowTime;
+            
+            db.ref(`attendance/${today}/${currentUserData.id}`).update(update).then(() => {
+                document.getElementById('loader').classList.add('hidden');
+                showToast(type + " Logged");
             });
         }
 
         function showToast(msg) {
             const t = document.getElementById('toast');
             document.getElementById('toastMsg').innerText = msg;
-            t.classList.remove('opacity-0', 'translate-y-10');
-            setTimeout(() => t.classList.add('opacity-0', 'translate-y-10'), 3000);
+            t.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
+            setTimeout(() => t.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none'), 3000);
         }
 
         setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
