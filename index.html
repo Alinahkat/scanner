@@ -65,9 +65,16 @@
         }
         #reader {
             width: 100% !important;
+            height: 100% !important;
             border-radius: 1.5rem;
             overflow: hidden;
             background: #000;
+        }
+        #reader video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+            display: block;
         }
         .location-lock {
             background: rgba(15, 23, 42, 0.9);
@@ -216,7 +223,6 @@
                     closePortal();
                     showToast(`Welcome, ${currentUserData.name || user.displayName}`);
                   
-                    // Show debug info (ID + Email)
                     document.getElementById('logged-id').textContent = currentUserData.id;
                     document.getElementById('logged-email').textContent = currentUserData.email;
                     document.getElementById('debug-info').classList.remove('hidden');
@@ -265,7 +271,6 @@
                 await html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 250 }, onScanSuccess);
             } catch (e) { console.error(e); }
         }
-        // ==================== FIXED onScanSuccess (now matches Employee ID) ====================
         function onScanSuccess(decodedText) {
             const scannedId = decodedText.trim();
             if (!currentUserData || scannedId !== currentUserData.id) {
@@ -273,7 +278,6 @@
                 showToast(`Access Denied: Mismatch<br><span class="text-red-600">Scanned:</span> ${scannedId}<br><span class="text-emerald-600">Expected ID:</span> ${expected}`);
                 return;
             }
-            // === SUCCESSFUL SCAN ===
             const today = new Date().toISOString().split('T')[0];
             const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
             db.ref(`attendance/${today}/${currentUserData.id}`).once('value', (attSnap) => {
@@ -305,7 +309,6 @@
                 });
             });
         }
-        // ================================================================================
         function showToast(msg) {
             const t = document.getElementById('toast');
             document.getElementById('toastMsg').innerHTML = msg;
