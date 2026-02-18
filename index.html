@@ -251,7 +251,7 @@
                 const userLon = pos.coords.longitude;
 
                 // Fetch Admin Set Location from Database
-                const snap = await db.ref('settings/location').once('value');
+                const snap = await db.ref('settings/officeLocation').once('value');
                 if (!snap.exists()) {
                     return showToast("Admin has not set a location yet.");
                 }
