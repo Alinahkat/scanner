@@ -66,6 +66,16 @@
             backdrop-filter: blur(12px);
             z-index: 50;
         }
+        .debug-info {
+            font-size: 10px;
+            color: #64748b;
+            background: rgba(255,255,255,0.05);
+            padding: 8px 12px;
+            border-radius: 12px;
+            margin-top: 12px;
+            text-align: left;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center p-4 relative">
@@ -111,11 +121,18 @@
                     <div id="reader"></div>
                 </div>
             </div>
+
+            <!-- Debug info (shows your logged-in email) -->
+            <div id="debug-info" class="debug-info hidden">
+                Logged in as: <span id="logged-email" class="font-mono text-blue-400"></span><br>
+                <span class="text-[9px] text-white/30">Make sure your QR code contains exactly this email</span>
+            </div>
+
             <p class="text-[10px] uppercase tracking-[0.3em] text-blue-400/50 font-black">Waiting for Verification</p>
         </div>
     </div>
 
-    <!-- Google Authentication View (replaces old email/password + registration form) -->
+    <!-- Google Login View -->
     <div id="login-view" class="flex-col justify-center items-center p-4">
         <div class="glass-card p-10 text-center space-y-6 w-full max-w-md shadow-2xl border-blue-500/30 border-2">
             <div class="flex justify-center">
@@ -140,7 +157,7 @@
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-6 left-4 right-4 bg-white text-slate-900 px-6 py-4 rounded-xl shadow-2xl transition-all duration-500 opacity-0 translate-y-10 pointer-events-none z-[200] font-bold text-xs uppercase">
+    <div id="toast" class="fixed bottom-6 left-4 right-4 bg-white text-slate-900 px-6 py-4 rounded-xl shadow-2xl transition-all duration-500 opacity-0 translate-y-10 pointer-events-none z-[200] font-bold text-xs uppercase text-center">
         <span id="toastMsg">Notification</span>
     </div>
 
@@ -185,10 +202,8 @@
             }
         }
 
-        // Google Auth + Admin Check (must happen BEFORE location verification)
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                // Check if this Google account email exists in Admin's employees node
                 const snap = await db.ref('employees')
                     .orderByChild('email')
                     .equalTo(user.email.toLowerCase())
@@ -197,12 +212,14 @@
                 if (snap.exists()) {
                     const data = snap.val();
                     const key = Object.keys(data)[0];
-                    currentUserData = { 
-                        ...data[key], 
-                        id: key 
-                    };
+                    currentUserData = { ...data[key], id: key };
+
                     closePortal();
                     showToast(`Welcome, ${currentUserData.name || user.displayName}`);
+                    
+                    // Show debug info
+                    document.getElementById('logged-email').textContent = currentUserData.email;
+                    document.getElementById('debug-info').classList.remove('hidden');
                 } else {
                     showToast("Access Denied: Google account not registered by Admin");
                     await auth.signOut();
@@ -222,15 +239,13 @@
                 const userLon = pos.coords.longitude;
 
                 const snap = await db.ref('settings/officeLocation').once('value');
-                if (!snap.exists()) {
-                    return showToast("Admin has not set office location yet.");
-                }
+                if (!snap.exists()) return showToast("Admin has not set office location yet.");
 
                 const adminConfig = snap.val();
                 const distance = calculateDistance(userLat, userLon, adminConfig.lat, adminConfig.lng);
 
                 if (distance <= (adminConfig.radius || 150)) {
-                    showToast("Location Verified ✓ You are at the site.");
+                    showToast("Location Verified ✓");
                     document.getElementById('location-overlay').classList.add('hidden');
                     startScanner();
                 } else {
@@ -255,18 +270,19 @@
             if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
             try {
                 await html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 250 }, onScanSuccess);
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         function onScanSuccess(decodedText) {
             const scannedEmail = decodedText.trim().toLowerCase();
+
             if (!currentUserData || scannedEmail !== currentUserData.email.toLowerCase()) {
-                showToast("Access Denied: QR code does not match your account");
+                const expected = currentUserData ? currentUserData.email.toLowerCase() : "Not logged in";
+                showToast(`Access Denied: Mismatch<br><span class="text-red-600">Scanned:</span> ${scannedEmail}<br><span class="text-emerald-600">Expected:</span> ${expected}`);
                 return;
             }
 
+            // === SUCCESSFUL SCAN ===
             const today = new Date().toISOString().split('T')[0];
             const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
@@ -304,9 +320,9 @@
 
         function showToast(msg) {
             const t = document.getElementById('toast');
-            document.getElementById('toastMsg').innerText = msg;
+            document.getElementById('toastMsg').innerHTML = msg;
             t.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
-            setTimeout(() => t.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none'), 3200);
+            setTimeout(() => t.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none'), 6000); // longer for debug
         }
 
         setInterval(() => {
