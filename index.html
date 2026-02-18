@@ -86,7 +86,7 @@
     <div class="blob"></div>
 
     <div id="login-view" class="w-full max-w-md flex-1 flex flex-col justify-center z-50">
-        <div class="glass-card p-10 text-center space-y-8">
+        <div class="glass-card p-10 text-center space-y-6">
             <div class="flex justify-center">
                 <div class="bg-blue-600/20 p-4 rounded-2xl backdrop-blur-md border border-blue-500/30">
                     <i class="fa-solid fa-fingerprint text-blue-400 text-4xl"></i>
@@ -94,12 +94,31 @@
             </div>
             <div>
                 <h1 class="text-3xl font-black text-white tracking-tight">ATTENDANCE<span class="text-blue-500">HUB</span></h1>
-                <p class="text-blue-200/60 text-sm mt-2 font-medium">Secure Google Authentication</p>
+                <p class="text-blue-200/60 text-sm mt-2 font-medium">Secure Access Portal</p>
             </div>
-            <button onclick="signInWithGoogle()" class="w-full py-4 bg-white text-slate-900 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-blue-50 transition-all btn-action shadow-xl">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
-                Sign in with Google
-            </button>
+
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="text-[10px] font-bold text-blue-400 uppercase tracking-widest ml-1">Email Address</label>
+                    <input type="email" id="auth-email" placeholder="email@company.com" class="w-full px-4 py-3 mt-1 input-glass rounded-xl focus:outline-none">
+                </div>
+                <div class="relative">
+                    <label class="text-[10px] font-bold text-blue-400 uppercase tracking-widest ml-1">Password</label>
+                    <input type="password" id="auth-password" placeholder="••••••••" class="w-full px-4 py-3 mt-1 input-glass rounded-xl focus:outline-none">
+                    <button onclick="togglePassword()" class="absolute right-4 top-9 text-white/40 hover:text-white">
+                        <i class="fa-solid fa-eye" id="password-icon"></i>
+                    </button>
+                </div>
+                <div class="text-right">
+                    <button onclick="forgotPassword()" class="text-[10px] font-bold text-blue-400 uppercase tracking-widest hover:text-blue-300 transition-colors">Forgot Password?</button>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <button onclick="handleAuth('signin')" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold btn-action shadow-xl">Sign In</button>
+                <button onclick="handleAuth('signup')" class="w-full py-4 bg-white/10 text-white rounded-xl font-bold btn-action border border-white/10">Register Account</button>
+            </div>
+            <p class="text-[9px] text-white/30 uppercase tracking-widest">Location access required for sign-in</p>
         </div>
     </div>
 
@@ -207,9 +226,72 @@
         let isScanning = false;
 
         // --- AUTH ---
-        function signInWithGoogle() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).catch(e => showToast(e.message, true));
+        function togglePassword() {
+            const p = document.getElementById('auth-password');
+            const i = document.getElementById('password-icon');
+            if (p.type === 'password') {
+                p.type = 'text';
+                i.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                p.type = 'password';
+                i.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        async function forgotPassword() {
+            const email = document.getElementById('auth-email').value.trim();
+            if(!email) return showToast("Enter email first");
+            try {
+                await auth.sendPasswordResetEmail(email);
+                showToast("Reset link sent to email");
+            } catch (e) { showToast(e.message); }
+        }
+
+        async function handleAuth(type) {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value.trim();
+            if (!email || !password) return showToast("Enter all fields");
+
+            try {
+                const empSnap = await db.ref('employees').orderByChild('email').equalTo(email).once('value');
+                if (!empSnap.exists()) return showToast("Email not registered by Admin");
+
+                const pos = await getCurrentLocation();
+                const isAtLocation = await verifyWorkLocation(pos.coords.latitude, pos.coords.longitude);
+                if (!isAtLocation) return showToast("Not at work location");
+
+                if (type === 'signup') {
+                    await auth.createUserWithEmailAndPassword(email, password);
+                    showToast("Registered Successfully");
+                } else {
+                    await auth.signInWithEmailAndPassword(email, password);
+                }
+            } catch (e) { showToast(e.message); }
+        }
+
+        function getCurrentLocation() {
+            return new Promise((res, rej) => {
+                if (!navigator.geolocation) rej(new Error("No Geolocation Support"));
+                navigator.geolocation.getCurrentPosition(res, rej);
+            });
+        }
+
+        async function verifyWorkLocation(lat, lon) {
+            const snap = await db.ref('settings/location').once('value');
+            if (!snap.exists()) return true;
+            const config = snap.val();
+            const dist = calculateDistance(lat, lon, config.lat, config.lon);
+            return dist <= (config.radius || 100);
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const dLat = (lat2-lat1) * Math.PI/180;
+            const dLon = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
         function logout() { auth.signOut(); }
@@ -220,7 +302,7 @@
             if (user) {
                 loginView.classList.add('hidden');
                 appContent.classList.remove('hidden');
-                setTimeout(startScanner, 800); // Wait for UI transition
+                setTimeout(startScanner, 800);
             } else {
                 stopScanner();
                 loginView.classList.remove('hidden');
@@ -228,35 +310,20 @@
             }
         });
 
-        // --- SCANNER ---
+        // --- SCANNER & ATTENDANCE ---
         async function startScanner() {
             if(isScanning) return;
-            const readerDiv = document.getElementById('reader');
-            if(!readerDiv) return;
-
             try {
                 if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-                
-                const config = { fps: 15, qrbox: { width: 250, height: 250 } };
-                await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
-                
+                await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, onScanSuccess);
                 isScanning = true;
-                const status = document.getElementById('scanner-status');
-                status.innerText = "Scanning Active...";
-                status.className = "text-[9px] uppercase tracking-[0.2em] text-green-400 font-bold italic";
-            } catch (err) {
-                document.getElementById('scanner-status').innerText = "Camera Error";
-                console.error(err);
-            }
+                document.getElementById('scanner-status').innerText = "Scanning Active...";
+            } catch (err) { console.error(err); }
         }
 
         async function stopScanner() {
             if(isScanning && html5QrCode) {
-                try {
-                    await html5QrCode.stop();
-                    isScanning = false;
-                    document.getElementById('scanner-status').innerText = "Camera Inactive";
-                } catch (e) { console.warn(e); }
+                try { await html5QrCode.stop(); isScanning = false; } catch (e) {}
             }
         }
 
@@ -264,16 +331,12 @@
             if(!decodedText) return;
             stopScanner();
             document.getElementById('scan-loader').classList.remove('hidden');
-            
             const empId = decodedText.trim().toUpperCase();
             const today = new Date().toISOString().split('T')[0];
             const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
             db.ref('employees/' + empId).once('value', (empSnap) => {
-                if(!empSnap.exists()) {
-                    handleScanError("Invalid ID");
-                    return;
-                }
+                if(!empSnap.exists()) return handleScanError("Invalid ID");
                 const empData = empSnap.val();
                 db.ref(`attendance/${today}/${empId}`).once('value', (attSnap) => {
                     let actionType = "";
@@ -284,7 +347,7 @@
                     else if (!attendance.LunchOut) { actionType = "Lunch Out"; updateData.LunchOut = nowTime; }
                     else if (!attendance.LunchBack) { actionType = "Lunch Back"; updateData.LunchBack = nowTime; }
                     else if (!attendance.TimeOut) { actionType = "Time Out"; updateData.TimeOut = nowTime; }
-                    else { handleScanError("Already Done"); return; }
+                    else return handleScanError("Already Done");
 
                     updateData.lastAction = actionType;
                     db.ref(`attendance/${today}/${empId}`).update(updateData).then(() => {
@@ -294,21 +357,16 @@
             });
         }
 
-        // --- UTILS ---
         function switchTab(mode) {
             const scanView = document.getElementById('view-scan');
             const actionView = document.getElementById('view-action');
             const slider = document.getElementById('slider');
             if(mode === 'scan') {
-                scanView.classList.remove('hidden');
-                actionView.classList.add('hidden');
-                slider.style.transform = 'translateX(0%)';
-                startScanner();
+                scanView.classList.remove('hidden'); actionView.classList.add('hidden');
+                slider.style.transform = 'translateX(0%)'; startScanner();
             } else {
-                scanView.classList.add('hidden');
-                actionView.classList.remove('hidden');
-                slider.style.transform = 'translateX(100%)';
-                stopScanner();
+                scanView.classList.add('hidden'); actionView.classList.remove('hidden');
+                slider.style.transform = 'translateX(100%)'; stopScanner();
             }
         }
 
@@ -323,8 +381,7 @@
 
         function handleScanError(msg) {
             document.getElementById('scan-loader').classList.add('hidden');
-            showToast(msg);
-            setTimeout(startScanner, 3000);
+            showToast(msg); setTimeout(startScanner, 3000);
         }
 
         function logManualAction(actionType) {
@@ -333,7 +390,6 @@
             document.getElementById('loader').classList.remove('hidden');
             const today = new Date().toISOString().split('T')[0];
             const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-            
             db.ref('employees/' + empId).once('value', snap => {
                 if(!snap.exists()) { document.getElementById('loader').classList.add('hidden'); return showToast("Invalid ID"); }
                 const update = { lastAction: actionType, timestamp: firebase.database.ServerValue.TIMESTAMP };
