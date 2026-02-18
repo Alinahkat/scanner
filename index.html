@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#020617">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
     <title>Employee Attendance Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -14,6 +18,10 @@
             background: #0f172a;
             overflow: hidden;
             overscroll-behavior-y: contain;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
         }
         .bg-gradient {
             position: fixed;
@@ -76,11 +84,18 @@
             text-align: left;
             word-break: break-all;
         }
+        button {
+            min-height: 48px;
+            -webkit-appearance: none;
+        }
+        #toast {
+            bottom: max(24px, env(safe-area-inset-bottom));
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center p-4 relative">
     <div class="bg-gradient"></div>
-   
+  
     <div id="app-content" class="flex-1 flex flex-col z-10 w-full max-w-md">
         <div class="pt-4 pb-6 flex justify-between items-center px-2">
             <div class="flex items-center gap-2">
@@ -112,20 +127,18 @@
                 <h2 class="text-2xl font-extrabold text-white">Identity Scanner</h2>
                 <p class="text-blue-200/60 text-[10px] uppercase font-bold tracking-widest mt-1">Place QR Code in Frame</p>
             </div>
-         
+        
             <div class="flex justify-center">
-                <div id="reader-container" class="p-1 bg-white/5 rounded-[2.2rem] w-full aspect-square max-w-[300px] overflow-hidden relative border border-white/10">
+                <div id="reader-container" class="p-1 bg-white/5 rounded-[2.2rem] w-full aspect-square max-w-[300px] overflow-hidden relative border border-white/10 min-h-[300px]">
                     <div id="reader"></div>
                 </div>
             </div>
-
             <!-- Debug info (shows Employee ID + Email) -->
             <div id="debug-info" class="debug-info hidden">
                 Employee ID: <span id="logged-id" class="font-mono text-emerald-400"></span><br>
                 Email: <span id="logged-email" class="font-mono text-blue-400"></span><br>
                 <span class="text-[9px] text-white/30">Make sure your QR code contains exactly this Employee ID</span>
             </div>
-
             <p class="text-[10px] uppercase tracking-[0.3em] text-blue-400/50 font-black">Waiting for Verification</p>
         </div>
     </div>
@@ -141,7 +154,7 @@
                 <h1 class="text-3xl font-black text-white tracking-tight">Sign In Required</h1>
                 <p class="text-white/60 mt-2">Use your Google account registered by Admin</p>
             </div>
-           
+          
             <button onclick="signInWithGoogle()"
                     class="w-full py-5 bg-white hover:bg-gray-100 active:scale-95 transition-all text-slate-900 rounded-2xl font-semibold flex items-center justify-center gap-4 text-lg shadow-xl">
                 <i class="fa-brands fa-google text-2xl"></i>
@@ -155,7 +168,6 @@
     <div id="toast" class="fixed bottom-6 left-4 right-4 bg-white text-slate-900 px-6 py-4 rounded-xl shadow-2xl transition-all duration-500 opacity-0 translate-y-10 pointer-events-none z-[200] font-bold text-xs uppercase text-center">
         <span id="toastMsg">Notification</span>
     </div>
-
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -175,7 +187,6 @@
         auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         let currentUserData = null;
         let html5QrCode = null;
-
         function showPortal() {
             document.getElementById('login-view').classList.add('active');
             document.getElementById('app-content').classList.add('blur-locked');
@@ -184,7 +195,6 @@
             document.getElementById('login-view').classList.remove('active');
             document.getElementById('app-content').classList.remove('blur-locked');
         }
-
         async function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             try {
@@ -193,7 +203,6 @@
                 showToast("Google sign-in failed: " + error.message);
             }
         }
-
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 const snap = await db.ref('employees')
@@ -206,7 +215,7 @@
                     currentUserData = { ...data[key], id: key };
                     closePortal();
                     showToast(`Welcome, ${currentUserData.name || user.displayName}`);
-                   
+                  
                     // Show debug info (ID + Email)
                     document.getElementById('logged-id').textContent = currentUserData.id;
                     document.getElementById('logged-email').textContent = currentUserData.email;
@@ -220,7 +229,6 @@
                 showPortal();
             }
         });
-
         async function detectAndVerifyLocation() {
             showToast("Detecting Location...");
             if (!navigator.geolocation) return showToast("GPS Not Supported");
@@ -242,7 +250,6 @@
                 showToast("Please grant GPS permission and try again.");
             }, { enableHighAccuracy: true });
         }
-
         function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371e3;
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -252,24 +259,20 @@
                       Math.sin(dLon/2) * Math.sin(dLon/2);
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
-
         async function startScanner() {
             if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
             try {
                 await html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 250 }, onScanSuccess);
             } catch (e) { console.error(e); }
         }
-
         // ==================== FIXED onScanSuccess (now matches Employee ID) ====================
         function onScanSuccess(decodedText) {
             const scannedId = decodedText.trim();
-
             if (!currentUserData || scannedId !== currentUserData.id) {
                 const expected = currentUserData ? currentUserData.id : "Not logged in";
                 showToast(`Access Denied: Mismatch<br><span class="text-red-600">Scanned:</span> ${scannedId}<br><span class="text-emerald-600">Expected ID:</span> ${expected}`);
                 return;
             }
-
             // === SUCCESSFUL SCAN ===
             const today = new Date().toISOString().split('T')[0];
             const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
@@ -303,14 +306,12 @@
             });
         }
         // ================================================================================
-
         function showToast(msg) {
             const t = document.getElementById('toast');
             document.getElementById('toastMsg').innerHTML = msg;
             t.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
             setTimeout(() => t.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none'), 6000);
         }
-
         setInterval(() => {
             document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-US', {
                 hour: '2-digit', minute: '2-digit', second: '2-digit'
