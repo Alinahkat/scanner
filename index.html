@@ -78,7 +78,7 @@
             display: block;
         }
         .location-lock {
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(2, 6, 23, 0.85);
             backdrop-filter: blur(12px);
             z-index: 50;
         }
@@ -99,6 +99,15 @@
         #toast {
             bottom: max(24px, env(safe-area-inset-bottom));
         }
+        .log-pill {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 8px 12px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center p-4 relative">
@@ -114,75 +123,98 @@
             </div>
             <div class="text-[10px] font-bold font-mono text-blue-100 bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-full" id="clock">00:00:00</div>
         </div>
-        <div id="view-scan" class="glass-card p-6 text-center space-y-6 relative overflow-hidden flex-1 flex flex-col justify-center">
-            <div id="location-overlay" class="absolute inset-0 location-lock flex flex-col items-center justify-center p-4 sm:p-8 text-center space-y-5 sm:space-y-6">
-                <div class="w-16 h-16 sm:w-20 sm:h-20 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/30">
-                    <i class="fa-solid fa-location-crosshairs text-blue-500 text-2xl sm:text-3xl animate-pulse"></i>
-                </div>
-                <div class="px-2">
-                    <h3 class="text-white font-bold text-base sm:text-lg">Location Locked</h3>
-                    <p class="text-white/40 text-[11px] sm:text-xs mt-2 max-w-[240px] mx-auto">Scanner will enable only when you are at the site set by Admin.</p>
-                </div>
-                <div class="w-full flex flex-col gap-3 items-center">
-                    <button onclick="detectAndVerifyLocation()" class="px-6 py-3 sm:px-8 sm:py-4 bg-blue-600 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest btn-action shadow-lg shadow-blue-900/20 w-[90%] sm:w-auto">
-                        Enable & Verify GPS
-                    </button>
-                    <button onclick="signOutUser()" class="text-white/40 text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors">
-                        <i class="fa-solid fa-right-from-bracket mr-1"></i> Sign Out
-                    </button>
+        <div id="view-scan" class="glass-card p-6 text-center space-y-4 relative overflow-hidden flex-1 flex flex-col justify-start">
+            
+            <div id="location-overlay" class="absolute inset-0 location-lock flex items-center justify-center p-4">
+                <div class="glass-card p-8 text-center space-y-6 w-full max-w-[320px] border-blue-500/30 border-2">
+                    <div class="flex justify-center">
+                        <div class="bg-blue-600/20 p-5 rounded-3xl border border-blue-500/30">
+                            <i class="fa-solid fa-location-crosshairs text-blue-400 text-5xl animate-pulse"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-black text-white tracking-tight">Location Locked</h3>
+                        <p class="text-white/60 mt-2 text-sm leading-relaxed">Verification is required to ensure you are at the designated site.</p>
+                    </div>
+                    <div class="space-y-4">
+                        <button onclick="detectAndVerifyLocation()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-all">
+                            Verify GPS
+                        </button>
+                        <button onclick="signOutUser()" class="w-full text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] hover:text-white transition-colors">
+                            Sign Out Account
+                        </button>
+                    </div>
                 </div>
             </div>
-            <div id="success-modal" class="absolute inset-0 z-[110] flex flex-col items-center justify-center bg-emerald-600/95 hidden backdrop-blur-lg p-4 text-center">
-                <i class="fa-solid fa-circle-check text-5xl sm:text-6xl text-white mb-4"></i>
-                <h3 class="text-xl sm:text-2xl font-black text-white uppercase" id="modal-action-text">Logged</h3>
+
+            <div id="success-modal" class="absolute inset-0 z-[110] flex items-center justify-center bg-emerald-950/40 backdrop-blur-xl hidden p-4">
+                <div class="glass-card p-8 text-center space-y-6 w-full max-w-[300px] border-emerald-500/30 border-2 bg-emerald-500/10">
+                    <div class="flex justify-center">
+                        <div class="bg-emerald-500/20 p-5 rounded-full border border-emerald-500/30">
+                            <i class="fa-solid fa-check text-emerald-400 text-5xl"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-3xl font-black text-white uppercase tracking-tighter" id="modal-action-text">Success</h3>
+                        <p class="text-emerald-200/60 text-xs font-bold uppercase tracking-widest mt-2">Log Recorded</p>
+                    </div>
+                </div>
             </div>
 
             <div class="py-2">
-                <div class="flex justify-between items-center mb-4">
+                <div class="flex justify-between items-center mb-2">
                     <h2 class="text-xl font-extrabold text-white">Identity Scanner</h2>
                     <button onclick="signOutUser()" class="bg-white/5 border border-white/10 text-white px-3 py-1 rounded-lg text-[9px] font-bold uppercase tracking-tighter">
                         Sign Out
                     </button>
                 </div>
-                <p class="text-blue-200/60 text-[10px] uppercase font-bold tracking-widest mt-1">Place QR Code in Frame</p>
             </div>
         
             <div class="flex justify-center">
-                <div id="reader-container" class="p-1 bg-white/5 rounded-[2.2rem] w-full aspect-square max-w-[300px] overflow-hidden relative border border-white/10 min-h-[300px]">
+                <div id="reader-container" class="p-1 bg-white/5 rounded-[2rem] w-full aspect-square max-w-[260px] overflow-hidden relative border border-white/10 min-h-[260px]">
                     <div id="reader"></div>
                 </div>
             </div>
-            <div id="debug-info" class="debug-info hidden">
-                Employee ID: <span id="logged-id" class="font-mono text-emerald-400"></span><br>
-                Email: <span id="logged-email" class="font-mono text-blue-400"></span><br>
-                <span class="text-[9px] text-white/30">Make sure your QR code contains exactly this Employee ID</span>
+
+            <div class="space-y-2 mt-4">
+                <p class="text-[9px] uppercase tracking-widest text-blue-400/50 font-black text-left ml-1">Today's Logs</p>
+                <div id="daily-logs" class="grid grid-cols-2 gap-2">
+                    <div class="log-pill"><span class="text-[9px] text-white/40 uppercase">In</span><span id="log-in" class="text-xs text-white font-mono">--:--</span></div>
+                    <div class="log-pill"><span class="text-[9px] text-white/40 uppercase">L-Out</span><span id="log-lout" class="text-xs text-white font-mono">--:--</span></div>
+                    <div class="log-pill"><span class="text-[9px] text-white/40 uppercase">L-Back</span><span id="log-lback" class="text-xs text-white font-mono">--:--</span></div>
+                    <div class="log-pill"><span class="text-[9px] text-white/40 uppercase">Out</span><span id="log-out" class="text-xs text-white font-mono">--:--</span></div>
+                </div>
             </div>
-            <p class="text-[10px] uppercase tracking-[0.3em] text-blue-400/50 font-black">Waiting for Verification</p>
+
+            <div id="debug-info" class="debug-info hidden">
+                ID: <span id="logged-id" class="font-mono text-emerald-400"></span>
+            </div>
         </div>
     </div>
+
     <div id="login-view" class="flex-col justify-center items-center p-4">
-        <div class="glass-card p-6 sm:p-10 text-center space-y-5 sm:space-y-6 w-full max-w-md shadow-2xl border-blue-500/30 border-2 my-auto">
+        <div class="glass-card p-10 text-center space-y-6 w-full max-w-md shadow-2xl border-blue-500/30 border-2 my-auto">
             <div class="flex justify-center">
-                <div class="bg-blue-600/20 p-4 sm:p-5 rounded-3xl border border-blue-500/30">
-                    <i class="fa-brands fa-google text-blue-400 text-5xl sm:text-6xl"></i>
+                <div class="bg-blue-600/20 p-5 rounded-3xl border border-blue-500/30">
+                    <i class="fa-brands fa-google text-blue-400 text-6xl"></i>
                 </div>
             </div>
             <div>
-                <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Sign In Required</h1>
-                <p class="text-white/60 mt-2 text-sm sm:text-base">Use your Google account registered by Admin</p>
+                <h1 class="text-3xl font-black text-white tracking-tight">Sign In Required</h1>
+                <p class="text-white/60 mt-2">Use your Google account registered by Admin</p>
             </div>
-          
             <button onclick="signInWithGoogle()"
-                    class="w-full py-4 sm:py-5 bg-white hover:bg-gray-100 active:scale-95 transition-all text-slate-900 rounded-2xl font-semibold flex items-center justify-center gap-3 sm:gap-4 text-base sm:text-lg shadow-xl">
-                <i class="fa-brands fa-google text-xl sm:text-2xl"></i>
+                    class="w-full py-5 bg-white hover:bg-gray-100 active:scale-95 transition-all text-slate-900 rounded-2xl font-semibold flex items-center justify-center gap-4 text-lg shadow-xl">
+                <i class="fa-brands fa-google text-2xl"></i>
                 Continue with Google
             </button>
-            <p class="text-[11px] sm:text-xs text-white/40 pt-4 sm:pt-6">
+            <p class="text-xs text-white/40 pt-6">
                 Only accounts pre-approved by Admin can access the scanner
             </p>
         </div>
     </div>
-    <div id="toast" class="fixed bottom-6 left-4 right-4 bg-white text-slate-900 px-4 sm:px-6 py-3 sm:py-4 rounded-xl shadow-2xl transition-all duration-500 opacity-0 translate-y-10 pointer-events-none z-[200] font-bold text-[10px] sm:text-xs uppercase text-center flex justify-center items-center">
+
+    <div id="toast" class="fixed bottom-6 left-4 right-4 bg-white text-slate-900 px-6 py-4 rounded-xl shadow-2xl transition-all duration-500 opacity-0 translate-y-10 pointer-events-none z-[200] font-bold text-[10px] uppercase text-center flex justify-center items-center">
         <span id="toastMsg" class="max-w-full break-words">Notification</span>
     </div>
     
@@ -219,63 +251,61 @@
 
         async function signOutUser() {
             try {
-                if (html5QrCode) {
-                    await html5QrCode.stop().catch(() => {});
-                }
+                if (html5QrCode) await html5QrCode.stop().catch(() => {});
                 await auth.signOut();
                 currentUserData = null;
                 document.getElementById('location-overlay').classList.remove('hidden');
                 document.getElementById('debug-info').classList.add('hidden');
                 showPortal();
-                showToast("Signed out successfully");
             } catch (error) {
-                showToast("Sign out failed: " + error.message);
+                showToast("Sign out failed");
             }
         }
         
         async function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            try {
-                await auth.signInWithPopup(provider);
-            } catch (error) {
-                showToast("Google sign-in failed: " + error.message);
-            }
+            try { await auth.signInWithPopup(provider); } catch (error) { showToast("Login failed"); }
         }
         
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                const snap = await db.ref('employees')
-                    .orderByChild('email')
-                    .equalTo(user.email.toLowerCase())
-                    .once('value');
+                const snap = await db.ref('employees').orderByChild('email').equalTo(user.email.toLowerCase()).once('value');
                 if (snap.exists()) {
                     const data = snap.val();
                     const key = Object.keys(data)[0];
                     currentUserData = { ...data[key], id: key };
                     closePortal();
-                    showToast(`Welcome, ${currentUserData.name || user.displayName}`);
-                  
                     document.getElementById('logged-id').textContent = currentUserData.id;
-                    document.getElementById('logged-email').textContent = currentUserData.email;
                     document.getElementById('debug-info').classList.remove('hidden');
+                    listenToAttendance();
                 } else {
-                    showToast("Access Denied: Google account not registered by Admin");
+                    showToast("Not registered");
                     await auth.signOut();
                     showPortal();
                 }
-            } else {
-                showPortal();
-            }
+            } else { showPortal(); }
         });
+
+        function listenToAttendance() {
+            if (!currentUserData) return;
+            const today = new Date().toISOString().split('T')[0];
+            db.ref(`attendance/${today}/${currentUserData.id}`).on('value', (snap) => {
+                const data = snap.val() || {};
+                document.getElementById('log-in').innerText = data.TimeIn || '--:--';
+                document.getElementById('log-lout').innerText = data.LunchOut || '--:--';
+                document.getElementById('log-lback').innerText = data.LunchBack || '--:--';
+                document.getElementById('log-out').innerText = data.TimeOut || '--:--';
+            });
+        }
         
         async function detectAndVerifyLocation() {
-            showToast("Detecting Location...");
+            showToast("Detecting...");
             if (!navigator.geolocation) return showToast("GPS Not Supported");
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const userLat = pos.coords.latitude;
                 const userLon = pos.coords.longitude;
                 const snap = await db.ref('settings/officeLocation').once('value');
-                if (!snap.exists()) return showToast("Admin has not set office location yet.");
+                if (!snap.exists()) return showToast("Office location not set");
                 const adminConfig = snap.val();
                 const distance = calculateDistance(userLat, userLon, adminConfig.lat, adminConfig.lng);
                 if (distance <= (adminConfig.radius || 150)) {
@@ -283,41 +313,29 @@
                     document.getElementById('location-overlay').classList.add('hidden');
                     startScanner();
                 } else {
-                    showToast(`Denied: You are ${Math.round(distance)}m away from site.`);
+                    showToast(`Outside Range (${Math.round(distance)}m)`);
                 }
-            }, (err) => {
-                showToast("Please grant GPS permission and try again.");
-            }, { enableHighAccuracy: true });
+            }, (err) => { showToast("Grant GPS permission"); }, { enableHighAccuracy: true });
         }
         
         function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371e3;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
         
         async function startScanner() {
             if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-            try {
-                await html5QrCode.start(
-                    { facingMode: "environment" }, 
-                    { fps: 20, qrbox: 250, aspectRatio: 1.0 }, 
-                    onScanSuccess
-                );
-            } catch (e) { console.error(e); }
+            try { await html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 220, aspectRatio: 1.0 }, onScanSuccess); } catch (e) {}
         }
         
         function onScanSuccess(decodedText) {
             const scannedId = decodedText.trim();
-            
             if (!currentUserData || scannedId !== currentUserData.id) {
-                const expected = currentUserData ? currentUserData.id : "Not logged in";
                 if (!window.errorToastThrottled) {
-                    showToast(`Access Denied: Mismatch<br><span class="text-red-600">Scanned:</span> ${scannedId}<br><span class="text-emerald-600">Expected ID:</span> ${expected}`);
+                    showToast(`ID Mismatch`);
                     window.errorToastThrottled = true;
                     setTimeout(() => window.errorToastThrottled = false, 3000);
                 }
@@ -332,7 +350,7 @@
             if (lastScan && (now - parseInt(lastScan)) < cooldownTime) {
                 if (!window.cooldownToastThrottled) {
                     const remainingMinutes = Math.ceil((cooldownTime - (now - parseInt(lastScan))) / 60000);
-                    showToast(`Please wait ${remainingMinutes} minute(s) before your next scan.`);
+                    showToast(`Wait ${remainingMinutes}m`);
                     window.cooldownToastThrottled = true;
                     setTimeout(() => window.cooldownToastThrottled = false, 5000);
                 }
@@ -346,42 +364,22 @@
             const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
             
             db.ref(`attendance/${today}/${currentUserData.id}`).once('value', (attSnap) => {
-                let update = {
-                    name: currentUserData.name || "Employee",
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                };
+                let update = { name: currentUserData.name || "Employee", timestamp: firebase.database.ServerValue.TIMESTAMP };
                 const att = attSnap.val();
                 let actionLabel = "Logged";
                 
-                if (!att) {
-                    actionLabel = "Time In";
-                    update.TimeIn = nowTime;
-                } else if (!att.LunchOut) {
-                    actionLabel = "Lunch Out";
-                    update.LunchOut = nowTime;
-                } else if (!att.LunchBack) {
-                    actionLabel = "Lunch Back";
-                    update.LunchBack = nowTime;
-                } else if (!att.TimeOut) {
-                    actionLabel = "Time Out";
-                    update.TimeOut = nowTime;
-                } else {
-                    window.isProcessingScan = false;
-                    return showToast("Attendance already complete for today.");
-                }
+                if (!att) { actionLabel = "Time In"; update.TimeIn = nowTime; } 
+                else if (!att.LunchOut) { actionLabel = "Lunch Out"; update.LunchOut = nowTime; } 
+                else if (!att.LunchBack) { actionLabel = "Lunch Back"; update.LunchBack = nowTime; } 
+                else if (!att.TimeOut) { actionLabel = "Time Out"; update.TimeOut = nowTime; } 
+                else { window.isProcessingScan = false; return showToast("Shift complete"); }
                 
                 db.ref(`attendance/${today}/${currentUserData.id}`).update(update).then(() => {
                     localStorage.setItem(lastScanKey, Date.now());
-                    
                     document.getElementById('modal-action-text').innerText = actionLabel;
                     document.getElementById('success-modal').classList.remove('hidden');
-                    setTimeout(() => {
-                        document.getElementById('success-modal').classList.add('hidden');
-                        window.isProcessingScan = false;
-                    }, 2800);
-                }).catch(() => {
-                    window.isProcessingScan = false; 
-                });
+                    setTimeout(() => { document.getElementById('success-modal').classList.add('hidden'); window.isProcessingScan = false; }, 2800);
+                }).catch(() => { window.isProcessingScan = false; });
             });
         }
         
@@ -389,13 +387,11 @@
             const t = document.getElementById('toast');
             document.getElementById('toastMsg').innerHTML = msg;
             t.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
-            setTimeout(() => t.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none'), 6000);
+            setTimeout(() => t.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none'), 4000);
         }
         
         setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-US', {
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-            });
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
         }, 1000);
     </script>
 </body>
