@@ -182,7 +182,7 @@
                     <div class="log-pill"><span class="text-[9px] text-white/40 uppercase">In</span><span id="log-in" class="text-xs text-white font-mono">--:--</span></div>
                     <div class="log-pill"><span class="text-[9px] text-white/40 uppercase">L-Out</span><span id="log-lout" class="text-xs text-white font-mono">--:--</span></div>
                     <div class="log-pill"><span class="text-[9px] text-white/40 uppercase">L-Back</span><span id="log-lback" class="text-xs text-white font-mono">--:--</span></div>
-                    <div class="log-pill"><span class="text-[9px] textwhite/40 uppercase">Out</span><span id="log-out" class="text-xs text-white font-mono">--:--</span></div>
+                    <div class="log-pill"><span class="text-[9px] text-white/40 uppercase">Out</span><span id="log-out" class="text-xs text-white font-mono">--:--</span></div>
                 </div>
             </div>
 
@@ -269,7 +269,6 @@
             try { await auth.signInWithPopup(provider); } catch (error) { showToast("Login failed"); }
         }
         
-        // Function to log unauthorized attempts
         async function logUnauthorizedAttempt(user) {
             const now = new Date();
             const timeString = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
@@ -281,10 +280,9 @@
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
                 device: deviceInfo,
                 severity: 'critical',
-                ip: 'pending' // In production, you'd get this from a backend service
+                ip: 'pending'
             };
             
-            // Push to unauthorized_attempts node
             await db.ref('unauthorized_attempts').push(attemptData);
         }
         
@@ -300,7 +298,6 @@
                     document.getElementById('debug-info').classList.remove('hidden');
                     listenToAttendance();
                 } else {
-                    // Log unauthorized attempt before signing out
                     await logUnauthorizedAttempt(user);
                     showToast("Not registered - Alert sent to admin");
                     await auth.signOut();
@@ -355,14 +352,13 @@
         }
         
         function onScanSuccess(decodedText) {
-            const scannedId = decodedText.trim();
+            // FIX: Clean the scanned text thoroughly and ensure string comparison
+            const scannedId = decodedText.trim().toString();
             
-            // Debounce: prevent same ID from triggering multiple times in quick succession
             if (scannedId === lastScannedId) {
                 return;
             }
             
-            // Validate that we have user data and the scanned ID matches
             if (!currentUserData) {
                 if (!window.errorToastThrottled) {
                     showToast("Not authenticated");
@@ -372,7 +368,10 @@
                 return;
             }
             
-            if (scannedId !== currentUserData.id) {
+            // FIX: Ensure the ID from DB is also treated as a string for comparison
+            const storedId = currentUserData.id.toString().trim();
+            
+            if (scannedId !== storedId) {
                 if (!window.errorToastThrottled) {
                     showToast(`ID Mismatch`);
                     window.errorToastThrottled = true;
@@ -381,7 +380,6 @@
                 return;
             }
 
-            // Set last scanned ID and clear it after a delay to allow re-scanning later
             lastScannedId = scannedId;
             clearTimeout(scanTimeout);
             scanTimeout = setTimeout(() => {
@@ -389,7 +387,7 @@
             }, 5000);
 
             const now = Date.now();
-            const lastScanKey = 'lastScanTime_' + currentUserData.id;
+            const lastScanKey = 'lastScanTime_' + storedId;
             const lastScan = localStorage.getItem(lastScanKey);
             const cooldownTime = 15 * 60 * 1000;
 
@@ -409,7 +407,7 @@
             const today = new Date().toISOString().split('T')[0];
             const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
             
-            db.ref(`attendance/${today}/${currentUserData.id}`).once('value', (attSnap) => {
+            db.ref(`attendance/${today}/${storedId}`).once('value', (attSnap) => {
                 let update = { name: currentUserData.name || "Employee", timestamp: firebase.database.ServerValue.TIMESTAMP };
                 const att = attSnap.val();
                 let actionLabel = "Logged";
@@ -420,7 +418,7 @@
                 else if (!att.TimeOut) { actionLabel = "Time Out"; update.TimeOut = nowTime; } 
                 else { window.isProcessingScan = false; return showToast("Shift complete"); }
                 
-                db.ref(`attendance/${today}/${currentUserData.id}`).update(update).then(() => {
+                db.ref(`attendance/${today}/${storedId}`).update(update).then(() => {
                     localStorage.setItem(lastScanKey, Date.now());
                     document.getElementById('modal-action-text').innerText = actionLabel;
                     document.getElementById('success-modal').classList.remove('hidden');
