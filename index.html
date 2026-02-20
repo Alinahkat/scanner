@@ -238,6 +238,8 @@
         
         let currentUserData = null;
         let html5QrCode = null;
+        let lastScannedId = null;
+        let scanTimeout = null;
         
         function showPortal() {
             document.getElementById('login-view').classList.add('active');
@@ -354,7 +356,23 @@
         
         function onScanSuccess(decodedText) {
             const scannedId = decodedText.trim();
-            if (!currentUserData || scannedId !== currentUserData.id) {
+            
+            // Debounce: prevent same ID from triggering multiple times in quick succession
+            if (scannedId === lastScannedId) {
+                return;
+            }
+            
+            // Validate that we have user data and the scanned ID matches
+            if (!currentUserData) {
+                if (!window.errorToastThrottled) {
+                    showToast("Not authenticated");
+                    window.errorToastThrottled = true;
+                    setTimeout(() => window.errorToastThrottled = false, 3000);
+                }
+                return;
+            }
+            
+            if (scannedId !== currentUserData.id) {
                 if (!window.errorToastThrottled) {
                     showToast(`ID Mismatch`);
                     window.errorToastThrottled = true;
@@ -362,6 +380,13 @@
                 }
                 return;
             }
+
+            // Set last scanned ID and clear it after a delay to allow re-scanning later
+            lastScannedId = scannedId;
+            clearTimeout(scanTimeout);
+            scanTimeout = setTimeout(() => {
+                lastScannedId = null;
+            }, 5000);
 
             const now = Date.now();
             const lastScanKey = 'lastScanTime_' + currentUserData.id;
